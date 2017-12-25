@@ -14,6 +14,7 @@ chive(韭菜)是一个加密数字货币期货的量化交易系统，现在的�
 
 #### 搭建环境
 本系统依赖kafka和influxDB，安装好后，kafka需要实现声明topic，使用下面的语句
+
     ./bin/kafka-topics.sh  --create  --zookeeper  localhost:2181  --replication-factor 1  --partitions  1  --topic okex_quote_pub
     ./bin/kafka-topics.sh  --create  --zookeeper  localhost:2181  --replication-factor 1  --partitions  1  --topic okex_archer_req
     ./bin/kafka-topics.sh  --create  --zookeeper  localhost:2181  --replication-factor 1  --partitions  1  --topic okex_archer_rsp
@@ -41,12 +42,12 @@ influxDB安装下载见[官网](https://www.influxdata.com/)
 
 ## 代码说明
 
-archer  下单程序
-spider  订阅收集行情程序
-krang   运行策略和计算行情指标程序
-stg     行情存储，将交易所一天的行情全部存到一个leveldb数据库，这些数据用于回放
-replay  回放程序，用于调试策略
-strategy 策略模块，新加策略放到该模块下
+    archer  下单程序
+    spider  订阅收集行情程序
+    krang   运行策略和计算行情指标程序
+    stg     行情存储，将交易所一天的行情全部存到一个leveldb数据库，这些数据用于回放
+    replay  回放程序，用于调试策略
+    strategy 策略模块，新加策略放到该模块下
 
 #### 新加策略
 本系统实现了一个简单的均线策略，在strategy/mavg下，新加策略可参照此策略实现, 策略接口如下
@@ -55,7 +56,7 @@ strategy 策略模块，新加策略放到该模块下
 type Strategy interface {
 
 	/*
-		策略初始化函数
+	  策略初始化函数
 	*/
 	Init(ctx Context)
 
