@@ -1,0 +1,25 @@
+{
+    "log": "../log",
+    "stg": "../data/",
+
+    "exchanges": "okex",  
+
+    "archer" : {
+        "okex": {
+            "apikey": "",
+            "secretkey": ""
+        }
+    },
+
+    "kafka" : {
+        "broker" : "localhost:9092"
+    },
+
+    "influxDB" : {
+        "addr": "http://localhost:8086"
+    }, 
+    
+    "replay" : {
+        "days": "2017-12-25"    
+    }
+}

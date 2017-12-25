@@ -1,0 +1,76 @@
+syntax = "proto2";
+option go_package = "protocol";
+
+message PBQuoteSymbol
+{
+    optional string exchange = 1;
+    optional string symbol = 2;
+    optional string contract_type = 3;
+    optional uint64 timestamp = 4; // 时间戳, 从19700101以来的毫秒数
+}
+
+// 期货合约分笔数据 tick
+message PBFutureTick
+{
+    optional float vol = 1;   // tick内成交量
+    optional float high = 2;  // tick内最高价
+    optional float low = 3;   // tick内最低价
+
+    optional float dayVol = 4;   // 24h成交量
+    optional float dayHigh = 5;  // 24h最高价
+    optional float dayLow = 6;   // 24h最低价
+
+    optional float last = 7;  // 最新价
+    optional float bid = 8;   // 买一价
+    optional float ask = 9;   // 卖一价
+    optional float bidVol = 10;   // 买一价的量
+    optional float askVol = 11;   // 卖一价的量
+
+    optional PBQuoteSymbol sinfo = 12;
+}
+
+// 期货合约K线数据 kline
+message PBFutureKLine
+{
+    optional float open = 1;       // 开
+    optional float high = 2;       // 高
+    optional float low = 3;        // 低
+    optional float close = 4;      // 收
+    optional float vol = 5;        // 成交量(币)
+    optional float amount = 6;     // 成交量(合约张数）
+    optional int32 kind = 7;       // K线种类
+    optional PBQuoteSymbol sinfo = 8;
+}
+
+// 盘口档位 order book item
+message PBFutureOBItem
+{
+    optional float price = 1;
+    optional float vol = 2;
+}
+
+// 盘口深度
+message PBFutureDepth
+{
+    repeated PBFutureOBItem asks = 1;
+    repeated PBFutureOBItem bids = 2;
+    optional PBQuoteSymbol sinfo = 3;
+}
+
+// 逐笔数据
+message PBFutureTrade
+{
+    optional string tradeSeq = 1;  // 逐笔数据序号
+    optional float price = 2;      // 成交价格
+    optional float vol = 3;        // 成交量,币
+    optional string bsCode = 4;    // 买卖方向，taker or maker
+    optional int32 amount = 5;     // 成交量,合约张数
+    optional PBQuoteSymbol sinfo = 6;
+}
+
+// 合约指数
+message PBFutureIndex
+{
+    optional float futureIndex = 1;    
+    optional PBQuoteSymbol sinfo = 2;
+}

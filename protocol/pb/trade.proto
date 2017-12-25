@@ -1,0 +1,184 @@
+syntax = "proto2";
+option go_package = "protocol";
+
+// 合约资金信息
+message PBFContractMoneyInfo 
+{
+    optional bytes contract_type = 1;  // 比如this_week
+    optional float freeze = 2;  // 冻结资金
+    optional float balance = 3; // 当前合约的余额，这个合约下所有单据余额之和
+    optional bytes contract_id = 4; //合约id
+    optional float available = 5; // 可用保证金，也就是这个品种下的可用保证金
+    optional float profit = 6; // 已实现的盈亏
+    optional float unprofit = 7; // 浮动盈亏
+    optional float bond = 8; // 固定保证金
+}
+
+// 单个品种的资金信息，比如btc_usd
+message PBFMoneyInfo
+{
+    optional bytes symbol = 1;   // 品种名称
+    optional float balance = 2;   // 单个品种上的可用余额
+    optional float rights = 3;    // 单个品种的总权益 = 余额 + 市值
+    repeated PBFContractMoneyInfo contracts = 4;
+}
+
+// 合约头寸信息
+// 头寸是按照某一品种的某一合约类型来划分，比如btc_usd下的this_week合约
+message PBFContractPosInfo
+{
+    optional float buy_amount = 1; //多仓数量
+    optional float buy_available = 2; // 多仓可平数量
+    optional float buy_bond = 3; // 多仓保证金
+    optional float buy_flatprice = 4; // 多仓强平价格
+    optional float buy_profit_lossratio = 5; //多仓盈亏比
+    optional float buy_price_avg = 6; //多仓开仓平均价
+    optional float buy_price_cost = 7; //多仓结算基准价
+    optional float buy_profit_real = 8; // 多仓已实现盈亏
+    optional bytes contract_id = 9; // 合约id
+    optional bytes contract_type = 10; // 合约类型
+    optional bytes create_date = 11; // 合约创建日期
+    optional float sell_amount = 12; // 空仓数量
+    optional float sell_available = 13; // 空仓可平数量
+    optional float sell_bond = 14; // 空仓保证金
+    optional float sell_flatprice = 15; // 空仓强平价格
+    optional float sell_profit_lossratio = 16; // 空仓强平价格
+    optional float sell_price_avg = 17; // 空仓开仓平均价
+    optional float sell_price_cost = 18; // 空仓结算基准价
+    optional float sell_profit_real = 19; // 空仓已实现盈亏
+    optional bytes symbol = 20; // 品种名称
+    optional int32 lever_rate = 21; // 杠杆倍数
+}
+
+// 订单信息
+message PBFOrderInfo
+{
+    optional float amount = 1; // 委托数量
+    optional bytes contract_name = 2; // 合约名称
+    optional bytes contract_date = 3; // 委托时间
+    optional float deal_amount = 4; // 成交数量
+    optional float fee = 5; // 手续费
+    optional bytes order_id = 6; // 订单id
+    optional float price = 7; // 订单委托价格
+    optional float price_avg = 8; // 订单成交平均价格
+    optional int32 status = 9; // 订单状态
+    optional bytes symbol = 10; // 品种名称
+    optional int32 type = 11; // 订单类型
+    optional float unit_amount = 12; // 合约面值
+    optional int32 lever_rate = 13; // 杠杆倍数
+    optional bytes contract_type = 14; // 合约类别
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+message RspInfo 
+{
+    optional int32 error_id = 1;
+    optional bytes error_msg = 2;
+}
+
+// 查询资金信息请求 
+message PBFReqQryMoneyInfo
+{
+    optional bytes exchange = 1;
+}
+
+// 查询资金信息回应 
+message PBFRspQryMoneyInfo
+{
+    optional RspInfo rsp = 1;
+    repeated PBFMoneyInfo money_infos = 2;
+}
+
+// 查询头寸请求
+message PBFReqQryPosInfo
+{
+    optional bytes exchange = 1;
+    optional bytes symbol = 2;
+    optional bytes contract_type = 3;
+}
+
+// 查询头寸回应
+message PBFRspQryPosInfo
+{
+    optional RspInfo rsp = 1;
+    repeated PBFContractPosInfo pos_infos = 2;
+}
+
+// 下单请求
+message PBFReqSetOrder
+{
+    optional bytes exchange = 1;
+    optional bytes symbol = 2;
+    optional bytes contract_type = 3;
+    optional float price = 4; // 委托价
+    optional int32 amount = 5; // 合约张数，整数
+    optional int32 order_type = 6; // 订单类型
+    optional int32 price_st = 7; // 价格类型
+    optional int32 level = 8; // 杠杆倍数
+    optional float vol = 9; // 币数量
+}
+
+// 下单回应
+message PBFRspSetOrder
+{
+    optional RspInfo rsp = 1;
+    optional bytes exchange = 2;
+    optional bytes symbol = 3;
+    optional bytes contract_type = 4;
+    optional bytes order_id = 5;
+}
+
+// 批量查询单据请求
+message PBFReqQryOrders
+{
+    optional bytes exchange = 1;
+    optional bytes symbol = 2;
+    optional bytes contract_type = 3;
+    optional bytes order_id = 4; // 查询多个订单的时候使用,分割订单号；如果使用status查询，则这里写-1
+    optional int32 order_status = 5;
+    optional int32 current_page = 6; // 当前页数，使用status查询时有效
+    optional int32 page_length = 7; // 每页条数，最大50
+}
+
+// 批量查询单据回应
+message PBFRspQryOrders
+{
+    optional RspInfo rsp = 1;
+    repeated PBFOrderInfo orders = 2;
+}
+
+// 批量撤销单据请求
+message PBFReqCancelOrders
+{
+    optional bytes exchange = 1;
+    optional bytes symbol = 2;
+    optional bytes contract_type = 3;
+    optional bytes order_id = 4; 
+}
+
+// 批量撤销单据回应
+message PBFRspCancelOrders
+{
+    optional RspInfo rsp = 1;
+    optional bytes exchange = 2;
+    optional bytes symbol = 3;
+    optional bytes contract_type = 4;
+    repeated bytes success = 5;    // 成功撤销的订单号
+    repeated bytes errors = 6;     // 撤销失败的订单号
+}
+
+// 在现货和合约账号划转资金请求
+message PBFReqTransferMoney
+{
+    optional bytes exchange = 1;
+    optional bytes symbol = 2;
+    optional int32 trans_type = 3;
+    optional float amount = 4;
+}
+
+// 在现货和合约账号划转资金回应
+message PBFRspTransferMoney
+{
+    optional RspInfo rsp = 1;
+}
