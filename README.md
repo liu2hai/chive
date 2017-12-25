@@ -31,6 +31,7 @@ influxDB安装下载见[官网](https://www.influxdata.com/)
 
 将前面安装好的kafka和influxDB的地址和端口参数，写到build/lapf.cnf里
 在okex开户并申请api交易权限，将分配的api key和secret key写到build/lapf.cnf里，如下
+
     "archer" : {
         "okex": {
             "apikey": "xxxxx",
@@ -54,7 +55,6 @@ influxDB安装下载见[官网](https://www.influxdata.com/)
 
 ```go
 type Strategy interface {
-
 	/*
 	  策略初始化函数
 	*/

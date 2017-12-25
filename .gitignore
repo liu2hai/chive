@@ -1,2 +1,4 @@
 .vscode
 *.swp
+/build/bin/
+!/build/bin/.gitkeep
