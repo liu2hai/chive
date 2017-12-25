@@ -133,18 +133,16 @@ func krangLoop(bReplay bool) {
 		v.Init(kr.ctx)
 	}
 
+	var pumpCh <-chan *sarama.ConsumerMessage
 	if bReplay {
-		replayLoop()
+		pumpCh = kr.replay.ReadMessages()
 	} else {
-		workLoop()
+		pumpCh = kfc.ReadMessages()
 	}
 
-}
-
-func workLoop() {
 	for {
 		select {
-		case msg := <-kfc.ReadMessages():
+		case msg := <-pumpCh:
 			handlemsg(msg)
 
 		case <-kr.exitCh:
@@ -172,18 +170,6 @@ func handlemsg(msg *sarama.ConsumerMessage) bool {
 
 func krangExit() {
 	kr.quotedb.Close()
-}
-
-func replayLoop() {
-	for {
-		select {
-		case msg := <-kr.replay.ReadMessages():
-			handlemsg(msg)
-
-		case <-kr.exitCh:
-			return
-		}
-	}
 }
 
 ////////////////////////////////////////////////////////
