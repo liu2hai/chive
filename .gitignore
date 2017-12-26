@@ -2,3 +2,8 @@
 *.swp
 /build/bin/
 !/build/bin/.gitkeep
+/build/data/
+!/build/data/.gitkeep
+/build/log/
+!/build/log/.gitkeep
+lapf.cnf
