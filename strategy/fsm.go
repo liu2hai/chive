@@ -46,22 +46,7 @@ type EventCompose struct {
 	Symbol       string
 	ContractType string
 
-	Profit struct {
-		LFloatP float32
-		LCloseP float32
-		LRate   float32
-
-		SFloatP float32
-		SCloseP float32
-		SRate   float32
-	}
-
-	Pos struct {
-		LAmount float32
-		LBond   float32
-		SAmount float32
-		SBond   float32
-	}
+	Pos *krang.Pos
 
 	Money struct {
 		Balance float32
@@ -82,20 +67,7 @@ func (e *EventCompose) reset() {
 	e.Exchange = ""
 	e.Symbol = ""
 	e.ContractType = ""
-
-	e.Profit.LFloatP = 0
-	e.Profit.LCloseP = 0
-	e.Profit.LRate = 0
-
-	e.Profit.SFloatP = 0
-	e.Profit.SCloseP = 0
-	e.Profit.SRate = 0
-
-	e.Pos.LAmount = 0
-	e.Pos.LBond = 0
-	e.Pos.SAmount = 0
-	e.Pos.SBond = 0
-
+	e.Pos = nil
 	e.Money.Balance = 0
 
 	for k, _ := range e.Macd.Signals {

@@ -23,6 +23,8 @@ type normalState struct {
 	maxVol         float32 // 最大仓位，币
 	stepRate       float32 //单次下单占仓位比例
 	marketSt       bool    // 是否使用市价单
+	openTimes      int32   // 开仓次数
+	openTimesLimit int32   // 开仓次数限制
 }
 
 func NewNormalState() strategy.FSMState {
@@ -33,6 +35,8 @@ func NewNormalState() strategy.FSMState {
 		maxVol:         0.5,
 		stepRate:       0.01,
 		marketSt:       true,
+		openTimes:      0,
+		openTimesLimit: 2,
 	}
 }
 
@@ -66,13 +70,16 @@ func (t *normalState) handleLongPart(ctx krang.Context, tick *krang.Tick, evc *s
 	if !ok {
 		return
 	}
+	if evc.Pos == nil {
+		return
+	}
 
-	if evc.Pos.LAmount <= 0 {
+	if evc.Pos.LongAmount <= 0 {
 		if s == strategy.SIGNAL_BUY {
 			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENLONG)
 		}
 	} else {
-		if evc.Profit.LRate <= t.stopLoseRate || evc.Profit.LRate >= t.stopLoseRate {
+		if evc.Pos.LongFloatPRate <= t.stopLoseRate || evc.Pos.LongFloatPRate >= t.stopLoseRate {
 			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG)
 		}
 
@@ -87,13 +94,16 @@ func (t *normalState) handleShortPart(ctx krang.Context, tick *krang.Tick, evc *
 	if !ok {
 		return
 	}
+	if evc.Pos == nil {
+		return
+	}
 
-	if evc.Pos.SAmount <= 0 {
+	if evc.Pos.ShortAmount <= 0 {
 		if s == strategy.SIGNAL_SELL {
 			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENSHORT)
 		}
 	} else {
-		if evc.Profit.SRate <= t.stopLoseRate || evc.Profit.SRate >= t.stopLoseRate {
+		if evc.Pos.ShortFloatPRate <= t.stopLoseRate || evc.Pos.ShortFloatPRate >= t.stopLoseRate {
 			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT)
 		}
 
@@ -106,6 +116,10 @@ func (t *normalState) handleShortPart(ctx krang.Context, tick *krang.Tick, evc *
 func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32) {
 	trader := ctx.GetTrader(evc.Exchange)
 	if trader == nil {
+		return
+	}
+	if t.openTimes >= t.openTimesLimit {
+		logs.Info("已达到开仓次数限制")
 		return
 	}
 
@@ -143,6 +157,8 @@ func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strate
 		Vol:          vol,
 	}
 	trader.SetOrder(cmd)
+	t.openTimes += 1
+
 	logs.Info("策略mavg开仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d]",
 		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, cmd.Vol, utils.OrderTypeStr(cmd.OrderType), 10)
 }
@@ -156,12 +172,12 @@ func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strat
 	var amount int32 = 0
 	var bond float32 = 0
 	if ot == protocol.ORDERTYPE_CLOSELONG {
-		amount = int32(evc.Pos.LAmount)
-		bond = evc.Pos.LBond
+		amount = int32(evc.Pos.LongAvai)
+		bond = evc.Pos.LongBond
 	}
 	if ot == protocol.ORDERTYPE_CLOSESHORT {
-		amount = int32(evc.Pos.SAmount)
-		bond = evc.Pos.SBond
+		amount = int32(evc.Pos.ShortAvai)
+		bond = evc.Pos.ShortBond
 	}
 
 	cmd := krang.SetOrderCmd{

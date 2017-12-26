@@ -109,6 +109,9 @@ type MaGraphic struct {
 	ma30 maline
 
 	klkind int32
+
+	// 最新K线时间
+	kts int64
 }
 
 func NewMaGraphic() *MaGraphic {
@@ -120,6 +123,7 @@ func NewMaGraphic() *MaGraphic {
 	m.ma30.ma = list.New()
 	m.ma30.length = 0
 	m.klkind = protocol.KL15Min // m默认使用15分钟k线
+	m.kts = 0
 	return m
 }
 
@@ -163,6 +167,11 @@ func (g *MaGraphic) TryCrossPoint() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 取最新K线的时间
+func (g *MaGraphic) GetLastKLTimeStamp() int64 {
+	return g.kts
+}
 
 // 查找最近的交叉点
 func (g *MaGraphic) FindLastCrossPoint() (MaCrossPoint, bool) {

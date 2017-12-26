@@ -119,6 +119,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) {
 		r.kl.Remove(r.kl.Front())
 		r.kc -= 1
 	}
+	r.mag.kts = tsn
 
 	/// Debug
 	logs.Info("[%s] new kline, close[%f], time[%s]", utils.KLineStr(pb.GetKind()), k.close, utils.TSStr(tsn))

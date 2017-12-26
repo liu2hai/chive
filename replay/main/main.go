@@ -10,6 +10,7 @@ import (
 	"github.com/liu2hai/chive/krang"
 	"github.com/liu2hai/chive/logs"
 	"github.com/liu2hai/chive/replay"
+	"github.com/liu2hai/chive/strategy/mavg"
 	"github.com/liu2hai/chive/utils"
 )
 
@@ -34,6 +35,9 @@ func main() {
 }
 
 func RunServer() error {
+	// 在这里注册需要测试回放的策略
+	mavg.RegisStrategy()
+
 	ch := make(chan int)
 	r, err := replay.StartReplay(ch)
 	if err != nil {

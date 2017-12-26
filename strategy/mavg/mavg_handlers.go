@@ -2,7 +2,6 @@ package mavg
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/liu2hai/chive/krang"
 	"github.com/liu2hai/chive/logs"
@@ -37,19 +36,7 @@ func (p *posHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Eve
 		return
 	}
 
-	e.Profit.LFloatP = pos.LongFloatProfit
-	e.Profit.LCloseP = pos.LongCloseProfit
-	e.Profit.LRate = pos.LongFloatPRate
-
-	e.Profit.SFloatP = pos.ShortFloatProfit
-	e.Profit.SCloseP = pos.ShortCloseProfit
-	e.Profit.SRate = pos.ShortFloatPRate
-
-	e.Pos.LAmount = pos.LongAvai // 这里使用可平合约张数
-	e.Pos.LBond = pos.LongBond
-	e.Pos.SAmount = pos.ShortAvai
-	e.Pos.SBond = pos.ShortBond
-
+	e.Pos = pos
 	e.Money.Balance = money.Balance
 }
 
@@ -57,7 +44,7 @@ func printPos(pos *krang.Pos) {
 	fmt.Println("-------------")
 	fmt.Println(pos.Symbol, pos.ContractType)
 	fmt.Println("多头合约张数：%f", pos.LongAmount)
-	fmt.Println("多头可平数量: %f", pos.LongAvai)
+	fmt.Println("多头可平合约张数: %f", pos.LongAvai)
 	fmt.Println("多头保证金: %f", pos.LongBond)
 	fmt.Println("多头强平价格：%f", pos.LongFlatPrice)
 	fmt.Println("多头开仓平均价：%f", pos.LongPriceAvg)
@@ -67,7 +54,7 @@ func printPos(pos *krang.Pos) {
 	fmt.Println("多头浮动盈亏比例：%f", pos.LongFloatPRate)
 	fmt.Println(" ")
 	fmt.Println("空头合约张数：%f", pos.ShortAmount)
-	fmt.Println("空多头可平数量: %f", pos.ShortAvai)
+	fmt.Println("空多头可平合约张数: %f", pos.ShortAvai)
 	fmt.Println("空多头保证金: %f", pos.ShortBond)
 	fmt.Println("空多头开仓平均价：%f", pos.ShortPriceAvg)
 	fmt.Println("空多头结算基准价：%f", pos.ShortPriceCost)
@@ -119,26 +106,35 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 		return
 	}
 
-	tsn := time.Now().Unix()
+	// 取最新K线的时间，这样在回测里才有效
+	tsn := g.GetLastKLTimeStamp()
 	tsStart := tsn - int64(m.distance*m.unit)
 	ma7Slope := g.ComputeMa7SlopeFactor(tsStart, tsn)
 	ma30Slope := g.ComputeMa30SlopeFactor(tsStart, tsn)
 
 	///debug
-	logs.Debug("macd signal, ma7Slope[%f], ma30Slope[%f], cp val[%f], cp time[%s]", ma7Slope, ma30Slope, cp.Val, utils.TSStr(cp.Ts))
+	logs.Info("macd signal, ma7Slope[%f], ma30Slope[%f], cp val[%f], cp time[%s]", ma7Slope, ma30Slope, cp.Val, utils.TSStr(cp.Ts))
 	///
 
 	// 斜率> 0 , 往右上斜，就是趋势向上
-	if ma7Slope > 0 && ma30Slope > 0 {
+	if ma7Slope >= 1 && ma30Slope > 0.4 {
 		if cp.Fcs == krang.FCS_DOWN2TOP {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
+
+			///debug
+			logs.Info("产生买信号")
+			///
 		}
 	}
 
 	// 斜率< 0 , 往右下斜，就是趋势向下
-	if ma7Slope < 0 && ma30Slope < 0 {
+	if ma7Slope <= -1 && ma30Slope < -0.4 {
 		if cp.Fcs == krang.FCS_TOP2DOWN {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
+
+			///debug
+			logs.Info("产生卖信号")
+			///
 		}
 	}
 }
