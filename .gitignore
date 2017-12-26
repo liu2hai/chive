@@ -7,3 +7,4 @@
 /build/log/
 !/build/log/.gitkeep
 lapf.cnf
+local_build.sh

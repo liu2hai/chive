@@ -45,9 +45,9 @@ func (p *posHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Eve
 	e.Profit.SCloseP = pos.ShortCloseProfit
 	e.Profit.SRate = pos.ShortFloatPRate
 
-	e.Pos.LAmount = pos.LongAmount
+	e.Pos.LAmount = pos.LongAvai // 这里使用可平合约张数
 	e.Pos.LBond = pos.LongBond
-	e.Pos.SAmount = pos.ShortAmount
+	e.Pos.SAmount = pos.ShortAvai
 	e.Pos.SBond = pos.ShortBond
 
 	e.Money.Balance = money.Balance

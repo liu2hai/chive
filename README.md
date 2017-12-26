@@ -29,8 +29,7 @@ influxDB安装下载见[官网](https://www.influxdata.com/)
 	go get github.com/bitly/go-simplejson
 	go get github.com/syndtr/goleveldb/leveldb
 
-将前面安装好的kafka和influxDB的地址和端口参数，写到build/lapf.cnf里
-在okex开户并申请api交易权限，将分配的api key和secret key写到build/lapf.cnf里，如下
+将前面安装好的kafka和influxDB的地址和端口参数，写到build/lapf.cnf里，在okex开户并申请api交易权限，将分配的api key和secret key写到build/lapf.cnf里，如下
 
     "archer" : {
         "okex": {
