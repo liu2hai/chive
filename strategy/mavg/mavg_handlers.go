@@ -79,13 +79,17 @@ type macdHandler struct {
 	klkind   int32
 	distance int32
 	unit     int32
+	fkrate   float32 // 快线斜率
+	skrate   float32 // 慢线斜率
 }
 
 func NewMACDHandler() strategy.FSMHandler {
 	return &macdHandler{
 		klkind:   protocol.KL5Min, // 使用5分钟k线
-		distance: 15,              // 使用50根k线计算斜率
+		distance: 3,               // 使用N根k线计算斜率
 		unit:     5 * 60,
+		fkrate:   0.6,
+		skrate:   0.4,
 	}
 }
 
@@ -117,7 +121,7 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	///
 
 	// 斜率> 0 , 往右上斜，就是趋势向上
-	if ma7Slope >= 1 && ma30Slope > 0.4 {
+	if ma7Slope >= m.fkrate && ma30Slope > m.skrate {
 		if cp.Fcs == krang.FCS_DOWN2TOP {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
 
@@ -128,7 +132,7 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	}
 
 	// 斜率< 0 , 往右下斜，就是趋势向下
-	if ma7Slope <= -1 && ma30Slope < -0.4 {
+	if ma7Slope <= (-1*m.fkrate) && ma30Slope < (-1*m.skrate) {
 		if cp.Fcs == krang.FCS_TOP2DOWN {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 

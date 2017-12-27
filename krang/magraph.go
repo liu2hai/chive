@@ -312,7 +312,11 @@ func getIntersect(a, b, c, d mast) (MaCrossPoint, bool) {
 	if f1 && f2 {
 		x, y, ok := intersectPoint(float32(a.ts), a.val, float32(b.ts), b.val, float32(c.ts), c.val, float32(d.ts), d.val)
 		if !ok {
-			return cp, false
+			// 在已经判断相交的情况下，求交点失败，只能是重合
+			// 这种情况下就取快线的第一个点
+			cp.Ts = a.ts
+			cp.Val = a.val
+			return cp, true
 		}
 
 		cp.Ts = int64(x)

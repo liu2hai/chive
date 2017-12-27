@@ -30,7 +30,7 @@ type normalState struct {
 func NewNormalState() strategy.FSMState {
 	return &normalState{
 		stopLoseRate:   -0.1,
-		stopProfitRate: 0.5,
+		stopProfitRate: 0.15,
 		minVol:         0.1,
 		maxVol:         0.5,
 		stepRate:       0.01,
