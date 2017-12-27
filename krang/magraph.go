@@ -291,7 +291,8 @@ func vectorProduct(va vector, vb vector) float32 {
 }
 
 /*
- 只判断相交，不求具体的相交点，相交点就用2根线段的中点吧
+ 判断相交和求出具体交点
+
 */
 func getIntersect(a, b, c, d mast) (MaCrossPoint, bool) {
 	ac := newVector(a, c)
@@ -304,17 +305,18 @@ func getIntersect(a, b, c, d mast) (MaCrossPoint, bool) {
 	da := negativeVector(ad)
 	db := negativeVector(bd)
 
-	f1 := vectorProduct(ac, ad)*vectorProduct(bc, bd) <= 0.0000001
-	f2 := vectorProduct(ca, cb)*vectorProduct(da, db) <= 0.0000001
+	f1 := vectorProduct(ac, ad)*vectorProduct(bc, bd) <= 0.000000001
+	f2 := vectorProduct(ca, cb)*vectorProduct(da, db) <= 0.000000001
 
 	cp := MaCrossPoint{}
 	if f1 && f2 {
-		dx := b.ts - a.ts
-		dy := b.val - a.val
+		x, y, ok := intersectPoint(float32(a.ts), a.val, float32(b.ts), b.val, float32(c.ts), c.val, float32(d.ts), d.val)
+		if !ok {
+			return cp, false
+		}
 
-		cp.Ts = a.ts + dx/2
-		cp.Val = a.val + dy/2
-
+		cp.Ts = int64(x)
+		cp.Val = y
 		cp.Fcs = FCS_NONE
 		if a.val < c.val {
 			cp.Fcs = FCS_DOWN2TOP
@@ -325,4 +327,21 @@ func getIntersect(a, b, c, d mast) (MaCrossPoint, bool) {
 		return cp, true
 	}
 	return cp, false
+}
+
+func intersectPoint(x1, y1, x2, y2, x3, y3, x4, y4 float32) (float32, float32, bool) {
+	b1 := (y2-y1)*x1 + (x1-x2)*y1
+	b2 := (y4-y3)*x3 + (x3-x4)*y3
+
+	d := (x2-x1)*(y4-y3) - (x4-x3)*(y2-y1)
+	d1 := b2*(x2-x1) - b1*(x4-x3)
+	d2 := b2*(y2-y1) - b1*(y4-y3)
+
+	if d >= 0 && d <= 0.000000001 {
+		return 0, 0, false
+	}
+
+	x := d1 / d
+	y := d2 / d
+	return x, y, true
 }
