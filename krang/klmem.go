@@ -55,12 +55,30 @@ func NewKLineMem(db string) *klmem {
 	return kl
 }
 
-func (k *klmem) addKLine(pb *protocol.PBFutureKLine) {
+func (k *klmem) addKLine(pb *protocol.PBFutureKLine) int32 {
 	if pb.GetKind() == protocol.KL5Min {
-		addImpl(k.k5, pb)
+		return addImpl(k.k5, pb)
 	} else if pb.GetKind() == protocol.KL15Min {
-		addImpl(k.k15, pb)
+		return addImpl(k.k15, pb)
 	}
+	return 0
+}
+
+func (k *klmem) getLastKLine(kind int32) (klst, bool) {
+	if kind == protocol.KL5Min {
+		return fetchImpl(k.k5, kind)
+	} else if kind == protocol.KL15Min {
+		return fetchImpl(k.k15, kind)
+	}
+	return klst{}, false
+}
+
+func fetchImpl(r *rbf, kind int32) (klst, bool) {
+	if r.kc <= 0 {
+		return klst{}, false
+	}
+	e := r.kl.Back().Value.(klst)
+	return e, true
 }
 
 func sumRangeKList(l *list.List, num int32) float32 {
@@ -84,8 +102,9 @@ func sumRangeKList(l *list.List, num int32) float32 {
 /*
   因为通过ws订阅的K线数据，交易所是有变动就发送数据，有可能这个K线没有封闭
   所以在这里来判断新来的K线数据和最新存储的是不是同一根K线
+  返回值大于0，表示有新的K线生成
 */
-func addImpl(r *rbf, pb *protocol.PBFutureKLine) {
+func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 	tsn := int64(pb.GetSinfo().GetTimestamp() / 1000)
 	k := klst{
 		open:   pb.GetOpen(),
@@ -102,14 +121,14 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) {
 		diff := tsn - lastKL.ts
 		if diff < 0 {
 			// 旧数据，扔掉
-			return
+			return 0
 		}
 
 		if diff >= 0 && diff < r.mag.SegmentSecs() {
 			// 同一根K线数据
 			r.kl.Remove(r.kl.Back())
 			r.kl.PushBack(k)
-			return
+			return 0
 		}
 	}
 
@@ -151,6 +170,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) {
 	if need >= 2 {
 		r.mag.TryCrossPoint()
 	}
+	return 1
 }
 
 func (k *klmem) queryMaGraphic(kline int32) *MaGraphic {

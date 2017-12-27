@@ -225,22 +225,28 @@ func klineTable(e int32) string {
 }
 
 func (t *influxdb) StoreKLine(pb *protocol.PBFutureKLine) {
-	table := klineTable(pb.GetKind())
-	fieldm := map[string]float32{
-		"open":  pb.GetOpen(),
-		"high":  pb.GetHigh(),
-		"low":   pb.GetLow(),
-		"close": pb.GetClose(),
-		"vol":   pb.GetVol(),
-	}
-	t.insertToAntm(table, fieldm, pb.GetSinfo())
-
 	dbn := utils.MakeupSinfo(pb.GetSinfo().GetExchange(), pb.GetSinfo().GetSymbol(), pb.GetSinfo().GetContractType())
 	k, ok := t.klm[dbn]
 	if !ok {
 		return
 	}
-	k.addKLine(pb)
+
+	if k.addKLine(pb) > 0 {
+		kl, ok := k.getLastKLine(pb.GetKind())
+		if !ok {
+			return
+		}
+
+		table := klineTable(pb.GetKind())
+		fieldm := map[string]float32{
+			"open":  kl.open,
+			"high":  kl.high,
+			"low":   kl.low,
+			"close": kl.close,
+			"vol":   kl.vol,
+		}
+		t.insertToAntm(table, fieldm, pb.GetSinfo())
+	}
 }
 
 func (t *influxdb) StoreDepth(pb *protocol.PBFutureDepth) {
