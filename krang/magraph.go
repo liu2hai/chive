@@ -10,10 +10,6 @@ import (
 
 const (
 	max_maline_len = 10000
-
-	FCS_NONE     = 0 // 快线和慢线无交叉
-	FCS_DOWN2TOP = 1 // 快线从下穿越慢线
-	FCS_TOP2DOWN = 2 // 快线从上穿越慢线
 )
 
 /*
@@ -87,9 +83,7 @@ func (l *maline) segment(tsStart int64, tsEnd int64) (mast, mast, bool) {
 			continue
 		}
 
-		if tail.val < 0 {
-			tail = ev
-		}
+		tail = ev
 	}
 
 	if head.val > 0 && tail.val > 0 {
@@ -101,13 +95,18 @@ func (l *maline) segment(tsStart int64, tsEnd int64) (mast, mast, bool) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type MaGraphic struct {
-	cpts   *list.List // cross points
+	// cross points
+	cpts   *list.List
 	cptlen int32
 
 	//ma线数据
 	ma7  maline
 	ma30 maline
 
+	// ma7 和 ma30的差距变化
+	diff maline
+
+	// K线类型
 	klkind int32
 
 	// 最新K线时间
@@ -122,6 +121,8 @@ func NewMaGraphic() *MaGraphic {
 	m.ma7.length = 0
 	m.ma30.ma = list.New()
 	m.ma30.length = 0
+	m.diff.ma = list.New()
+	m.diff.length = 0
 	m.klkind = protocol.KL15Min // m默认使用15分钟k线
 	m.kts = 0
 	return m
@@ -135,6 +136,10 @@ func (g *MaGraphic) UpdateMa7Line(sum float32, tsn int64) {
 
 func (g *MaGraphic) UpdateMa30Line(sum float32, tsn int64) {
 	g.ma30.update(sum, tsn)
+}
+
+func (g *MaGraphic) UpdateDiffLine(delta float32, tsn int64) {
+	g.diff.update(delta, tsn)
 }
 
 // 测试是否有交叉点
@@ -155,7 +160,7 @@ func (g *MaGraphic) TryCrossPoint() {
 	}
 
 	///debug
-	logs.Info("[%s] new crosspoint, value[%f], time[%s], fcs[%s]", utils.KLineStr(g.klkind), cp.Val, utils.TSStr(cp.Ts), fcsstr(cp.Fcs))
+	logs.Info("[%s] new crosspoint, value[%f], time[%s], fcs[%s]", utils.KLineStr(g.klkind), cp.Val, utils.TSStr(cp.Ts), utils.FcsStr(cp.Fcs))
 	///
 
 	g.cpts.PushBack(cp)
@@ -223,6 +228,15 @@ func (g *MaGraphic) ComputeMa30SlopeFactor(tsStart int64, tsEnd int64) float32 {
 	return g.slopeFactor(head, tail)
 }
 
+// 计算diff在某个时间段的斜率
+func (g *MaGraphic) ComputeDiffSlopeFactor(tsStart int64, tsEnd int64) float32 {
+	head, tail, ok := g.diff.segment(tsStart, tsEnd)
+	if !ok {
+		return 0
+	}
+	return g.slopeFactor(head, tail)
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (g *MaGraphic) SegmentSecs() int64 {
@@ -248,18 +262,6 @@ func (g *MaGraphic) slopeFactor(head mast, tail mast) float32 {
 	deltaY := tail.val - head.val
 	k := deltaY / float32(deltaX)
 	return k
-}
-
-func fcsstr(fcs int32) string {
-	switch fcs {
-	case FCS_NONE:
-		return "无交叉"
-	case FCS_DOWN2TOP:
-		return "快线从下穿越慢线"
-	case FCS_TOP2DOWN:
-		return "快线从上穿越慢线"
-	}
-	return "未知"
 }
 
 /*
@@ -321,12 +323,12 @@ func getIntersect(a, b, c, d mast) (MaCrossPoint, bool) {
 
 		cp.Ts = int64(x)
 		cp.Val = y
-		cp.Fcs = FCS_NONE
+		cp.Fcs = protocol.FCS_NONE
 		if a.val < c.val {
-			cp.Fcs = FCS_DOWN2TOP
+			cp.Fcs = protocol.FCS_DOWN2TOP
 		}
 		if a.val >= c.val {
-			cp.Fcs = FCS_TOP2DOWN
+			cp.Fcs = protocol.FCS_TOP2DOWN
 		}
 		return cp, true
 	}

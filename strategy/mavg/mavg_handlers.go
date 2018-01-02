@@ -81,15 +81,17 @@ type macdHandler struct {
 	unit     int32
 	fkrate   float32 // 快线斜率
 	skrate   float32 // 慢线斜率
+	dkrate   float32 // 快线和慢线差距曲线的斜率
 }
 
 func NewMACDHandler() strategy.FSMHandler {
 	return &macdHandler{
 		klkind:   protocol.KL5Min, // 使用5分钟k线
-		distance: 3,               // 使用N根k线计算斜率
+		distance: 5,               // 使用N根k线计算斜率
 		unit:     5 * 60,
-		fkrate:   0.6,
-		skrate:   0.4,
+		fkrate:   0.3,
+		skrate:   0.2,
+		dkrate:   0.03,
 	}
 }
 
@@ -105,24 +107,34 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 		return
 	}
 
-	cp, ok := g.FindLastCrossPoint()
-	if !ok {
-		return
-	}
-
 	// 取最新K线的时间，这样在回测里才有效
 	tsn := g.GetLastKLTimeStamp()
 	tsStart := tsn - int64(m.distance*m.unit)
 	ma7Slope := g.ComputeMa7SlopeFactor(tsStart, tsn)
 	ma30Slope := g.ComputeMa30SlopeFactor(tsStart, tsn)
+	diffSlope := g.ComputeDiffSlopeFactor(tsStart, tsn)
+
+	if utils.IsZero32(ma7Slope) || utils.IsZero32(ma30Slope) {
+		return
+	}
 
 	///debug
-	logs.Info("macd signal, ma7Slope[%f], ma30Slope[%f], cp val[%f], cp time[%s]", ma7Slope, ma30Slope, cp.Val, utils.TSStr(cp.Ts))
+	logs.Info("macd signal, ma7Slope[%f], ma30Slope[%f], diffSlope[%f]", ma7Slope, ma30Slope, diffSlope)
+	///
+
+	cp, ok := g.FindLastCrossPoint()
+	if !ok {
+		m.noCrossPointCase(ma7Slope, ma30Slope, diffSlope, e)
+		return
+	}
+
+	///debug
+	logs.Info("macd signal, cp val[%f], cp time[%s]", cp.Val, utils.TSStr(cp.Ts))
 	///
 
 	// 斜率> 0 , 往右上斜，就是趋势向上
 	if ma7Slope >= m.fkrate && ma30Slope > m.skrate {
-		if cp.Fcs == krang.FCS_DOWN2TOP {
+		if cp.Fcs == protocol.FCS_DOWN2TOP {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
 
 			///debug
@@ -133,12 +145,37 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 
 	// 斜率< 0 , 往右下斜，就是趋势向下
 	if ma7Slope <= (-1*m.fkrate) && ma30Slope < (-1*m.skrate) {
-		if cp.Fcs == krang.FCS_TOP2DOWN {
+		if cp.Fcs == protocol.FCS_TOP2DOWN {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 
 			///debug
 			logs.Info("产生卖信号")
 			///
 		}
+	}
+}
+
+// 在diffSlope变大的时候，也就是快线和慢线差距变大的时候，才考虑下单
+func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diffSlope float32, e *strategy.EventCompose) {
+	if diffSlope <= m.dkrate {
+		return
+	}
+
+	// 斜率> 0 , 往右上斜，就是趋势向上
+	if ma7Slope >= m.fkrate && ma30Slope > m.skrate {
+		e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
+
+		///debug
+		logs.Info("产生买信号")
+		///
+	}
+
+	// 斜率< 0 , 往右下斜，就是趋势向下
+	if ma7Slope <= (-1*m.fkrate) && ma30Slope < (-1*m.skrate) {
+		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
+
+		///debug
+		logs.Info("产生卖信号")
+		///
 	}
 }

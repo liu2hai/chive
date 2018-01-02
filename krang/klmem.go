@@ -147,27 +147,34 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 	var need int32 = 0
 
 	// 计算ma7 和ma30
+	var sum7 float32
 	if r.kc >= 7 {
-		sum := sumRangeKList(r.kl, 7)
-		r.mag.UpdateMa7Line(sum, tsn)
+		sum7 := sumRangeKList(r.kl, 7)
+		r.mag.UpdateMa7Line(sum7, tsn)
 		need += 1
 
 		/// Debug
-		logs.Info("[%s] new ma7, sum[%f], time[%s]", utils.KLineStr(pb.GetKind()), sum, utils.TSStr(tsn))
+		logs.Info("[%s] new ma7, sum7[%f], time[%s]", utils.KLineStr(pb.GetKind()), sum7, utils.TSStr(tsn))
 		/// Debug
 	}
 
+	var sum30 float32
 	if r.kc >= 30 {
-		sum := sumRangeKList(r.kl, 30)
-		r.mag.UpdateMa30Line(sum, tsn)
+		sum30 := sumRangeKList(r.kl, 30)
+		r.mag.UpdateMa30Line(sum30, tsn)
 		need += 1
 
 		/// Debug
-		logs.Info("[%s] new ma30, sum[%f], time[%s]", utils.KLineStr(pb.GetKind()), sum, utils.TSStr(tsn))
+		logs.Info("[%s] new ma30, sum30[%f], time[%s]", utils.KLineStr(pb.GetKind()), sum30, utils.TSStr(tsn))
 		/// Debug
 	}
 
 	if need >= 2 {
+		delta := sum7 - sum30
+		if delta < 0.0 {
+			delta = delta * -1
+		}
+		r.mag.UpdateDiffLine(delta, tsn)
 		r.mag.TryCrossPoint()
 	}
 	return 1

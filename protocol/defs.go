@@ -51,3 +51,9 @@ const (
 	KL1H    int32 = 6
 	KL1D    int32 = 7
 )
+
+const (
+	FCS_NONE     = 0 // 快线和慢线无交叉
+	FCS_DOWN2TOP = 1 // 快线从下穿越慢线
+	FCS_TOP2DOWN = 2 // 快线从上穿越慢线
+)

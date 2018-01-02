@@ -78,6 +78,26 @@ func KLineStr(kl int32) string {
 	return "未知"
 }
 
+func FcsStr(fcs int32) string {
+	switch fcs {
+	case protocol.FCS_NONE:
+		return "无交叉"
+	case protocol.FCS_DOWN2TOP:
+		return "快线从下穿越慢线"
+	case protocol.FCS_TOP2DOWN:
+		return "快线从上穿越慢线"
+	}
+	return "未知"
+}
+
 func TSStr(ts int64) string {
 	return time.Unix(ts, 0).Format(protocol.TM_LAYOUT_STR)
+}
+
+func IsZero32(f float32) bool {
+	return f >= -0.000001 && f <= 0.000001
+}
+
+func IsZero64(f float64) bool {
+	return f >= -0.000001 && f <= 0.000001
 }
