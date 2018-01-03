@@ -36,7 +36,7 @@ func NewNormalState() strategy.FSMState {
 		stepRate:       0.01,
 		marketSt:       true,
 		openTimes:      0,
-		openTimesLimit: 2,
+		openTimesLimit: 5,
 	}
 }
 

@@ -82,16 +82,18 @@ type macdHandler struct {
 	fkrate   float32 // 快线斜率
 	skrate   float32 // 慢线斜率
 	dkrate   float32 // 快线和慢线差距曲线的斜率
+	fsdiff   float32 // 快线和慢线的差距值
 }
 
 func NewMACDHandler() strategy.FSMHandler {
 	return &macdHandler{
 		klkind:   protocol.KL5Min, // 使用5分钟k线
-		distance: 5,               // 使用N根k线计算斜率
+		distance: 3,               // 使用N根k线计算斜率
 		unit:     5 * 60,
-		fkrate:   0.3,
-		skrate:   0.2,
+		fkrate:   0.1,
+		skrate:   0.04,
 		dkrate:   0.03,
+		fsdiff:   1.2,
 	}
 }
 
@@ -113,13 +115,14 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	ma7Slope := g.ComputeMa7SlopeFactor(tsStart, tsn)
 	ma30Slope := g.ComputeMa30SlopeFactor(tsStart, tsn)
 	diffSlope := g.ComputeDiffSlopeFactor(tsStart, tsn)
+	fsdiff := g.GetLastDiff()
 
-	if utils.IsZero32(ma7Slope) || utils.IsZero32(ma30Slope) {
+	if utils.IsZero32(ma7Slope) || utils.IsZero32(ma30Slope) || utils.IsZero32(fsdiff) {
 		return
 	}
 
 	///debug
-	logs.Info("macd signal, ma7Slope[%f], ma30Slope[%f], diffSlope[%f]", ma7Slope, ma30Slope, diffSlope)
+	logs.Info("macd signal, tsn[%s], ma7Slope[%f], ma30Slope[%f], diffSlope[%f], fsdiff[%f]", utils.TSStr(tsn), ma7Slope, ma30Slope, diffSlope, fsdiff)
 	///
 
 	cp, ok := g.FindLastCrossPoint()
@@ -132,9 +135,13 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	logs.Info("macd signal, cp val[%f], cp time[%s]", cp.Val, utils.TSStr(cp.Ts))
 	///
 
+	/*
+	  首先判断趋势是否成立，发出建仓信号，买多信号对于空头就是平仓信号
+	*/
+
 	// 斜率> 0 , 往右上斜，就是趋势向上
 	if ma7Slope >= m.fkrate && ma30Slope > m.skrate {
-		if cp.Fcs == protocol.FCS_DOWN2TOP {
+		if cp.Fcs == protocol.FCS_DOWN2TOP && fsdiff >= m.fsdiff {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
 
 			///debug
@@ -145,13 +152,30 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 
 	// 斜率< 0 , 往右下斜，就是趋势向下
 	if ma7Slope <= (-1*m.fkrate) && ma30Slope < (-1*m.skrate) {
-		if cp.Fcs == protocol.FCS_TOP2DOWN {
+		if cp.Fcs == protocol.FCS_TOP2DOWN && fsdiff >= m.fsdiff {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 
 			///debug
 			logs.Info("产生卖信号")
 			///
 		}
+	}
+
+	/*
+	  其次要判断拐点的到来
+	*/
+	if ma7Slope < (-1*m.fkrate) && ma30Slope > 0 && diffSlope < m.dkrate {
+		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
+		///debug
+		logs.Info("产生卖信号K")
+		///
+	}
+
+	if ma7Slope > m.fkrate && ma30Slope < 0 && diffSlope < m.dkrate {
+		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
+		///debug
+		logs.Info("产生卖信号K")
+		///
 	}
 }
 

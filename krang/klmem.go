@@ -149,7 +149,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 	// 计算ma7 和ma30
 	var sum7 float32
 	if r.kc >= 7 {
-		sum7 := sumRangeKList(r.kl, 7)
+		sum7 = sumRangeKList(r.kl, 7)
 		r.mag.UpdateMa7Line(sum7, tsn)
 		need += 1
 
@@ -160,7 +160,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 
 	var sum30 float32
 	if r.kc >= 30 {
-		sum30 := sumRangeKList(r.kl, 30)
+		sum30 = sumRangeKList(r.kl, 30)
 		r.mag.UpdateMa30Line(sum30, tsn)
 		need += 1
 

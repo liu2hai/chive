@@ -173,6 +173,15 @@ func (g *MaGraphic) TryCrossPoint() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// 取最新的差距点
+func (g *MaGraphic) GetLastDiff() float32 {
+	e, ok := g.diff.back(0)
+	if !ok {
+		return 0
+	}
+	return e.val
+}
+
 // 取最新K线的时间
 func (g *MaGraphic) GetLastKLTimeStamp() int64 {
 	return g.kts
