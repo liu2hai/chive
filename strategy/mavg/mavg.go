@@ -91,6 +91,7 @@ func (t *MavgStrategy) CheckFeedBack(ctx krang.Context) bool {
 
 	for _, v := range datas {
 		logs.Info("[%s]策略回馈中没有执行完成的命令：tid[%d], reqserial[%d]", THIS_STRATEGY_NAME, v.Tid, v.ReqSerial)
+		fb.Remove(v.ReqSerial)
 	}
 	return true
 }

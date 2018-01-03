@@ -27,13 +27,21 @@ func (p *posHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Eve
 	kp := ctx.GetKeeper()
 	pos := kp.GetPos(tick.Exchange, tick.Symbol, tick.ContractType)
 	if pos == nil {
-		return
+		pos = &krang.Pos{
+
+			Exchange:     tick.Exchange,
+			Symbol:       tick.Symbol,
+			ContractType: tick.ContractType,
+		}
 	}
 	printPos(pos)
 
 	money := kp.GetMoney(tick.Exchange, tick.Symbol)
 	if money == nil {
-		return
+		money = &krang.Money{
+			Exchange: tick.Exchange,
+			Symbol:   tick.Symbol,
+		}
 	}
 
 	e.Pos = pos

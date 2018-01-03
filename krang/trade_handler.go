@@ -96,26 +96,24 @@ func rspSetOrder(p protocol.Package, key string) bool {
 		return true
 	}
 
-	if pb.GetRsp().GetErrorId() != protocol.ErrId_OK {
-		logs.Info("下单失败，原因：%s", string(pb.GetRsp().GetErrorMsg()))
-		return true
-	}
-
-	// 先更新反馈信息
-	kr.keeper.GetFeedBack().Remove(p.GetReqSerial())
-
-	id := string(pb.GetOrderId())
 	trader, ok := kr.traders[key]
 	if !ok {
 		return true
 	}
 	s := string(pb.GetSymbol())
 	c := string(pb.GetContractType())
-	trader.QueryOrder(s, c, id)
-
 	trader.QueryAccount()
 	trader.QueryPos(s, c)
 
+	if pb.GetRsp().GetErrorId() != protocol.ErrId_OK {
+		logs.Info("下单失败，原因：%s", string(pb.GetRsp().GetErrorMsg()))
+		return true
+	}
+
+	// 更新反馈信息
+	kr.keeper.GetFeedBack().Remove(p.GetReqSerial())
+	id := string(pb.GetOrderId())
+	trader.QueryOrder(s, c, id)
 	return true
 }
 

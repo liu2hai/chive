@@ -290,7 +290,7 @@ func (t *okexArcher) setOrder(cmd *ArcherCmd) {
 	params["sign"] = buildMySign(params, t.secretkey)
 	eid, js := doHttpPost(t.resturl, resource, params)
 	handleRspSetOrderInfo(eid, js, t, cmd)
-	logs.Info("okex下单，商品[%s], 合约类型[%s], 合约张数[%d], 订单类型[%d], 价格[%f], 杠杠[%d]",
+	logs.Info("okex下单，商品[%s], 合约类型[%s], 合约张数[%d], 订单类型[%s], 价格[%f], 杠杠[%d]",
 		cmd.Symbol, cmd.ContractType, cmd.Amount, utils.OrderTypeStr(int32(cmd.OrderType)), cmd.Price, cmd.Level)
 }
 
@@ -298,7 +298,12 @@ func handleRspSetOrderInfo(eid int, js *simplejson.Json, t *okexArcher, cmd *Arc
 	pb := &protocol.PBFRspSetOrder{}
 	rsp := &protocol.RspInfo{}
 	rsp.ErrorId = proto.Int(eid)
+
 	pb.Rsp = rsp
+	pb.Exchange = []byte(cmd.Exchange)
+	pb.Symbol = []byte(cmd.Symbol)
+	pb.ContractType = []byte(cmd.ContractType)
+
 	if eid != protocol.ErrId_OK {
 		return
 	}
@@ -308,13 +313,9 @@ func handleRspSetOrderInfo(eid int, js *simplejson.Json, t *okexArcher, cmd *Arc
 		logs.Error("请求订单信息API返回失败, error [%s]", msg)
 		rsp.ErrorId = proto.Int(protocol.ErrId_ApiError)
 		rsp.ErrorMsg = []byte(msg)
-		return
+	} else {
+		pb.OrderId = []byte(strconv.FormatUint(js.Get("order_id").MustUint64(), 10))
 	}
-	pb.OrderId = []byte(strconv.FormatUint(js.Get("order_id").MustUint64(), 10))
-	pb.Exchange = []byte(cmd.Exchange)
-	pb.Symbol = []byte(cmd.Symbol)
-	pb.ContractType = []byte(cmd.ContractType)
-
 	okexArcherReply(protocol.FID_RspSetOrder, cmd.ReqSerial, pb)
 }
 

@@ -179,6 +179,9 @@ func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strat
 		amount = int32(evc.Pos.ShortAvai)
 		bond = evc.Pos.ShortBond
 	}
+	if amount <= 0 {
+		return
+	}
 
 	cmd := krang.SetOrderCmd{
 		Stname:       THIS_STRATEGY_NAME,
