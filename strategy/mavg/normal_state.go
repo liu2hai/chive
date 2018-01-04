@@ -58,6 +58,9 @@ func (t *normalState) Enter() {
  5. 如果有仓位，是否超出止盈止损范围，如果超出，平仓
  6. 如果有仓位，信号是买，空头头寸平仓
  7. 如果有仓位，信号是卖，多头头寸平仓
+
+ 平仓或者建仓后，应先更新头寸，因为下单到查询头寸，更新头寸信息，这里有一个时间差
+ 在这个时间差内应该按照最新的头寸信息操作
 */
 func (t *normalState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) string {
 	t.handleLongPart(ctx, tick, evc)
@@ -67,10 +70,7 @@ func (t *normalState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.
 
 func (t *normalState) handleLongPart(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) {
 	s, ok := evc.Macd.Signals[protocol.KL5Min]
-	if !ok {
-		return
-	}
-	if evc.Pos == nil {
+	if !ok || evc.Pos == nil {
 		return
 	}
 
@@ -94,10 +94,7 @@ func (t *normalState) handleLongPart(ctx krang.Context, tick *krang.Tick, evc *s
 
 func (t *normalState) handleShortPart(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) {
 	s, ok := evc.Macd.Signals[protocol.KL5Min]
-	if !ok {
-		return
-	}
-	if evc.Pos == nil {
+	if !ok || evc.Pos == nil {
 		return
 	}
 
@@ -165,6 +162,18 @@ func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strate
 	trader.SetOrder(cmd)
 	t.openTimes += 1
 
+	// 先更新本地头寸信息
+	amountf := float32(amount)
+	if ot == protocol.ORDERTYPE_OPENLONG {
+		evc.Pos.LongAmount += amountf
+		evc.Pos.LongAvai += amountf
+		evc.Pos.LongBond += vol
+	} else if ot == protocol.ORDERTYPE_OPENSHORT {
+		evc.Pos.ShortAmount += amountf
+		evc.Pos.ShortAvai += amountf
+		evc.Pos.ShortBond += vol
+	}
+
 	logs.Info("策略mavg开仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s]",
 		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, cmd.Vol, utils.OrderTypeStr(cmd.OrderType), 10, reason)
 }
@@ -194,7 +203,7 @@ func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strat
 		Exchange:     evc.Exchange,
 		Symbol:       evc.Symbol,
 		ContractType: evc.ContractType,
-		Price:        0,
+		Price:        tick.Last,
 		Amount:       amount,
 		OrderType:    ot,
 		PriceSt:      protocol.PRICE_ST_MARKET,
@@ -202,6 +211,17 @@ func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strat
 		Vol:          0,
 	}
 	trader.SetOrder(cmd)
+
+	// 先更新本地头寸信息
+	amountf := float32(amount)
+	if ot == protocol.ORDERTYPE_CLOSELONG {
+		evc.Pos.LongAmount -= amountf
+		evc.Pos.LongAvai -= amountf
+	} else if ot == protocol.ORDERTYPE_CLOSESHORT {
+		evc.Pos.ShortAmount -= amountf
+		evc.Pos.ShortAvai -= amountf
+	}
+
 	logs.Info("策略mavg平仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s]",
 		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, bond, utils.OrderTypeStr(cmd.OrderType), 10, reason)
 }
