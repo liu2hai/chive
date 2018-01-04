@@ -30,7 +30,7 @@ type normalState struct {
 func NewNormalState() strategy.FSMState {
 	return &normalState{
 		stopLoseRate:   -0.1,
-		stopProfitRate: 0.15,
+		stopProfitRate: 0.2,
 		minVol:         0.1,
 		maxVol:         0.5,
 		stepRate:       0.01,
@@ -74,17 +74,20 @@ func (t *normalState) handleLongPart(ctx krang.Context, tick *krang.Tick, evc *s
 		return
 	}
 
-	if evc.Pos.LongAmount <= 0 {
+	if evc.Pos.LongAvai <= 0 {
 		if s == strategy.SIGNAL_BUY {
-			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENLONG)
+			reason := "买入信号"
+			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENLONG, reason)
 		}
 	} else {
-		if evc.Pos.LongFloatPRate <= t.stopLoseRate || evc.Pos.LongFloatPRate >= t.stopLoseRate {
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG)
+		if evc.Pos.LongFloatPRate <= t.stopLoseRate || evc.Pos.LongFloatPRate >= t.stopProfitRate {
+			reason := "超出止盈止损范围"
+			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason)
 		}
 
 		if s == strategy.SIGNAL_SELL {
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG)
+			reason := "卖出信号，平多"
+			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason)
 		}
 	}
 }
@@ -98,22 +101,25 @@ func (t *normalState) handleShortPart(ctx krang.Context, tick *krang.Tick, evc *
 		return
 	}
 
-	if evc.Pos.ShortAmount <= 0 {
+	if evc.Pos.ShortAvai <= 0 {
 		if s == strategy.SIGNAL_SELL {
-			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENSHORT)
+			reason := "卖出信号"
+			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENSHORT, reason)
 		}
 	} else {
-		if evc.Pos.ShortFloatPRate <= t.stopLoseRate || evc.Pos.ShortFloatPRate >= t.stopLoseRate {
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT)
+		if evc.Pos.ShortFloatPRate <= t.stopLoseRate || evc.Pos.ShortFloatPRate >= t.stopProfitRate {
+			reason := "超出止盈止损范围"
+			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason)
 		}
 
 		if s == strategy.SIGNAL_BUY {
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT)
+			reason := "买入信号，平空"
+			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason)
 		}
 	}
 }
 
-func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32) {
+func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32, reason string) {
 	trader := ctx.GetTrader(evc.Exchange)
 	if trader == nil {
 		return
@@ -159,11 +165,11 @@ func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strate
 	trader.SetOrder(cmd)
 	t.openTimes += 1
 
-	logs.Info("策略mavg开仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d]",
-		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, cmd.Vol, utils.OrderTypeStr(cmd.OrderType), 10)
+	logs.Info("策略mavg开仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s]",
+		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, cmd.Vol, utils.OrderTypeStr(cmd.OrderType), 10, reason)
 }
 
-func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32) {
+func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32, reason string) {
 	trader := ctx.GetTrader(evc.Exchange)
 	if trader == nil {
 		return
@@ -196,6 +202,6 @@ func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strat
 		Vol:          0,
 	}
 	trader.SetOrder(cmd)
-	logs.Info("策略mavg平仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d]",
-		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, bond, utils.OrderTypeStr(cmd.OrderType), 10)
+	logs.Info("策略mavg平仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s]",
+		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, bond, utils.OrderTypeStr(cmd.OrderType), 10, reason)
 }
