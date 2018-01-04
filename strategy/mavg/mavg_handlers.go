@@ -27,21 +27,13 @@ func (p *posHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Eve
 	kp := ctx.GetKeeper()
 	pos := kp.GetPos(tick.Exchange, tick.Symbol, tick.ContractType)
 	if pos == nil {
-		pos = &krang.Pos{
-			Exchange:     tick.Exchange,
-			Symbol:       tick.Symbol,
-			ContractType: tick.ContractType,
-		}
+		panic("keeper internal error")
 	}
 	printPos(pos)
 
 	money := kp.GetMoney(tick.Exchange, tick.Symbol)
 	if money == nil {
-		money = &krang.Money{
-			Exchange: tick.Exchange,
-			Symbol:   tick.Symbol,
-			Balance:  0,
-		}
+		panic("keeper internal error")
 	}
 
 	e.Pos = pos
@@ -153,7 +145,7 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
 
 			///debug
-			logs.Info("产生买信号")
+			logs.Info("产生买信号K1")
 			///
 		}
 	}
@@ -164,7 +156,7 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 
 			///debug
-			logs.Info("产生卖信号")
+			logs.Info("产生卖信号K2")
 			///
 		}
 	}
@@ -175,14 +167,14 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	if ma7Slope < (-1*m.fkrate) && ma30Slope > 0 && diffSlope < m.dkrate {
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 		///debug
-		logs.Info("产生卖信号K")
+		logs.Info("产生卖信号K3")
 		///
 	}
 
 	if ma7Slope > m.fkrate && ma30Slope < 0 && diffSlope < m.dkrate {
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 		///debug
-		logs.Info("产生卖信号K")
+		logs.Info("产生卖信号K4")
 		///
 	}
 }
@@ -198,7 +190,7 @@ func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diff
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
 
 		///debug
-		logs.Info("产生买信号")
+		logs.Info("产生买信号K5")
 		///
 	}
 
@@ -207,7 +199,7 @@ func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diff
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 
 		///debug
-		logs.Info("产生卖信号")
+		logs.Info("产生卖信号K6")
 		///
 	}
 }

@@ -328,12 +328,20 @@ func (k *keeper) GetOrderBySinfo(exchange string, symbol string, contractType st
 	return ret
 }
 
+// 没有的话创建一个
 func (k *keeper) GetPos(exchange string, symbol string, contractType string) *Pos {
 	idx := k.findPos(exchange, symbol, contractType)
 	if idx >= 0 {
 		return k.pos[idx]
 	}
-	return nil
+	p := &Pos{
+		Exchange:     tick.Exchange,
+		Symbol:       tick.Symbol,
+		ContractType: tick.ContractType,
+	}
+	p.Reset()
+	k.pos = append(k.pos, p)
+	return p
 }
 
 func (k *keeper) GetMoney(exchange string, symbol string) *Money {
@@ -341,7 +349,14 @@ func (k *keeper) GetMoney(exchange string, symbol string) *Money {
 	if idx >= 0 {
 		return k.moneys[idx]
 	}
-	return nil
+	m := &Money{
+		Exchange: tick.Exchange,
+		Symbol:   tick.Symbol,
+		Balance:  0,
+		Rights:   0,
+	}
+	k.moneys = append(k.moneys, m)
+	return m
 }
 
 func (k *keeper) GetFeedBack() FeedBack {
