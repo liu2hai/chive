@@ -335,9 +335,9 @@ func (k *keeper) GetPos(exchange string, symbol string, contractType string) *Po
 		return k.pos[idx]
 	}
 	p := &Pos{
-		Exchange:     tick.Exchange,
-		Symbol:       tick.Symbol,
-		ContractType: tick.ContractType,
+		Exchange:     exchange,
+		Symbol:       symbol,
+		ContractType: contractType,
 	}
 	p.Reset()
 	k.pos = append(k.pos, p)
@@ -350,8 +350,8 @@ func (k *keeper) GetMoney(exchange string, symbol string) *Money {
 		return k.moneys[idx]
 	}
 	m := &Money{
-		Exchange: tick.Exchange,
-		Symbol:   tick.Symbol,
+		Exchange: exchange,
+		Symbol:   symbol,
 		Balance:  0,
 		Rights:   0,
 	}
