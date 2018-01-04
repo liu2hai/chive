@@ -25,4 +25,7 @@ func TestTm(t *testing.T) {
 		fmt.Println("here: ", tt)
 	}
 	fmt.Println("tt: ", tt)
+
+	var arr []int = nil
+	fmt.Println("len nil: ", len(arr), arr)
 }

@@ -1,3 +1,7 @@
+/*
+  查询类的请求如果是API返回失败，都没有返回给后台处理
+  因为后台也无法处理，唯有继续发起查询
+*/
 package bows
 
 import (
@@ -202,14 +206,18 @@ func (t *okexArcher) qryHoldDetail(cmd *ArcherCmd) {
 	}
 	params["sign"] = buildMySign(params, t.secretkey)
 	eid, js := doHttpPost(t.resturl, resource, params)
-	handleRspHoldDetail(eid, js, cmd.ReqSerial)
+	handleRspHoldDetail(eid, js, cmd)
 }
 
-func handleRspHoldDetail(eid int, js *simplejson.Json, reqSerial int) {
+func handleRspHoldDetail(eid int, js *simplejson.Json, cmd *ArcherCmd) {
 	pb := &protocol.PBFRspQryPosInfo{}
 	rsp := &protocol.RspInfo{}
 	rsp.ErrorId = proto.Int(eid)
+
 	pb.Rsp = rsp
+	pb.Exchange = []byte(cmd.Exchange)
+	pb.Symbol = []byte(cmd.Symbol)
+	pb.ContractType = []byte(cmd.ContractType)
 
 	if eid != protocol.ErrId_OK {
 		return
@@ -271,7 +279,7 @@ func handleRspHoldDetail(eid int, js *simplejson.Json, reqSerial int) {
 		pb.PosInfos = append(pb.PosInfos, subp)
 	}
 
-	okexArcherReply(protocol.FID_RspQryPosInfo, reqSerial, pb)
+	okexArcherReply(protocol.FID_RspQryPosInfo, cmd.ReqSerial, pb)
 }
 
 // 下单

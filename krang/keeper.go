@@ -99,6 +99,25 @@ func (p *Pos) OnTick(exchange string, pb *protocol.PBFutureTick) {
 	trader.computePosProfit(p, pb)
 }
 
+// 清除数据部分
+func (p *Pos) Reset() {
+	p.LongAmount = 0      // 多头合约张数
+	p.LongAvai = 0        // 多头可平数量
+	p.LongBond = 0        // 多头保证金
+	p.LongFlatPrice = 0   // 多头强平价格
+	p.LongPriceAvg = 0    // 多头开仓平均价
+	p.LongPriceCost = 0   // 多头结算基准价
+	p.LongCloseProfit = 0 // 多头已平仓盈亏
+
+	p.ShortAmount = 0      // 空头合约张数
+	p.ShortAvai = 0        // 空头可平数量
+	p.ShortBond = 0        // 空头保证金
+	p.ShortFlatPrice = 0   // 空头强平价格
+	p.ShortPriceAvg = 0    // 空头开仓平均价
+	p.ShortPriceCost = 0   // 空头结算基准价
+	p.ShortCloseProfit = 0 // 空头已平仓盈亏
+}
+
 type Money struct {
 	Exchange string
 	Symbol   string
@@ -203,16 +222,27 @@ func (k *keeper) HandleOrders(exchange string, pb *protocol.PBFRspQryOrders) boo
 	return true
 }
 
+/*
+   头寸信息以服务器发来的回应为准
+   1. 如果这个商品返回的头寸信息为空，删除或者reset本地的头寸信息
+   2. 如果这个商品返回的头寸信息不存在本地，添加
+   3. 如果这个商品返回的头寸信息存在本地，更新
+*/
 func (k *keeper) HandlePos(exchange string, pb *protocol.PBFRspQryPosInfo) bool {
 	if pb.GetRsp().GetErrorId() != protocol.ErrId_OK {
 		return false
 	}
 
-	var pos *Pos = nil
-	for _, v := range pb.GetPosInfos() {
-		symbol := string(v.GetSymbol())
-		contractType := string(v.GetContractType())
-		idx := k.findPos(exchange, symbol, contractType)
+	symbol := string(pb.GetSymbol())
+	contractType := string(pb.GetContractType())
+	idx := k.findPos(exchange, symbol, contractType)
+
+	if len(pb.GetPosInfos()) <= 0 {
+		if idx >= 0 {
+			k.pos[idx].Reset()
+		}
+	} else {
+		var pos *Pos = nil
 		if idx < 0 {
 			p := &Pos{}
 			p.Exchange = exchange
@@ -224,6 +254,8 @@ func (k *keeper) HandlePos(exchange string, pb *protocol.PBFRspQryPosInfo) bool 
 		} else {
 			pos = k.pos[idx]
 		}
+
+		v := pb.GetPosInfos()[0]
 		pos.LongAmount = v.GetBuyAmount()          // 多头合约张数
 		pos.LongAvai = v.GetBuyAvailable()         // 多头可平数量
 		pos.LongBond = v.GetBuyBond()              // 多头保证金
