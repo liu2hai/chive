@@ -90,7 +90,7 @@ message PBFRspQryMoneyInfo
     repeated PBFMoneyInfo money_infos = 2;
 }
 
-// 查询头寸请求
+// 查询头寸请求, 一次只查询一个商品的头寸
 message PBFReqQryPosInfo
 {
     optional bytes exchange = 1;
@@ -102,7 +102,10 @@ message PBFReqQryPosInfo
 message PBFRspQryPosInfo
 {
     optional RspInfo rsp = 1;
-    repeated PBFContractPosInfo pos_infos = 2;
+    optional bytes exchange = 2;
+    optional bytes symbol = 3;
+    optional bytes contract_type = 4;
+    repeated PBFContractPosInfo pos_infos = 5;
 }
 
 // 下单请求
