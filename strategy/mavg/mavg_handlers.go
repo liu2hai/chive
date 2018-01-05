@@ -29,7 +29,7 @@ func (p *posHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Eve
 	if pos == nil {
 		panic("keeper internal error")
 	}
-	printPos(pos)
+    printPos(pos)
 
 	money := kp.GetMoney(tick.Exchange, tick.Symbol)
 	if money == nil {
