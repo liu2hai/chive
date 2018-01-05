@@ -47,7 +47,7 @@ func NewNormalState() strategy.FSMState {
 		stopProfitRate: 0.2,
 		minVol:         0.1,
 		maxVol:         0.5,
-		stepRate:       0.01,
+		stepRate:       0.1,
 		marketSt:       true,
 		level:          10,
 	}
