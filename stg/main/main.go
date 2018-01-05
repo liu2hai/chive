@@ -35,7 +35,7 @@ func main() {
 
 func RunServer() error {
 	brokers := []string{config.T.Broker}
-	topics := []string{protocol.TOPIC_OKEX_QUOTE_PUB}
+	topics := []string{protocol.TOPIC_OKEX_QUOTE_PUB, protocol.TOPIC_OKEX_ARCHER_RSP}
 
 	kfc.InitClient(brokers)
 	err := kfc.TobeConsumer(topics)

@@ -93,8 +93,7 @@ func stgLoop(ch chan int) {
 				return
 			}
 			if cmd == STG_CMD_SWITCH_TRADINGDAY {
-				b := switchTradingDay()
-				if !b {
+				if !switchTradingDay() {
 					return
 				}
 			}
