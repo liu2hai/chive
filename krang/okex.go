@@ -51,7 +51,7 @@ func (t *okexTrade) packAndSend(tid uint32, pb proto.Message, tag string) uint32
 
 // 交易所支持得品种
 func (t *okexTrade) Symbols() []string {
-	return []string{"ltc_usd", "btc_usd"}
+	return []string{"ltc_usd", "btc_usd", "etc_usd", "eth_usd", "bch_usd"}
 }
 
 // 交易所支持得合约类型

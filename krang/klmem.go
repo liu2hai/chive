@@ -106,6 +106,7 @@ func sumRangeKList(l *list.List, num int32) float32 {
 */
 func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 	tsn := int64(pb.GetSinfo().GetTimestamp() / 1000)
+	symbol := pb.GetSinfo().GetSymbol()
 	k := klst{
 		open:   pb.GetOpen(),
 		high:   pb.GetHigh(),
@@ -141,7 +142,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 	r.mag.kts = tsn
 
 	/// Debug
-	logs.Info("[%s] new kline, close[%f], time[%s]", utils.KLineStr(pb.GetKind()), k.close, utils.TSStr(tsn))
+	logs.Info("[%s-%s] new kline, close[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), k.close, utils.TSStr(tsn))
 	/// Debug
 
 	var need int32 = 0
@@ -154,7 +155,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 		need += 1
 
 		/// Debug
-		logs.Info("[%s] new ma7, sum7[%f], time[%s]", utils.KLineStr(pb.GetKind()), sum7, utils.TSStr(tsn))
+		logs.Info("[%s-%s] new ma7, sum7[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), sum7, utils.TSStr(tsn))
 		/// Debug
 	}
 
@@ -165,7 +166,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 		need += 1
 
 		/// Debug
-		logs.Info("[%s] new ma30, sum30[%f], time[%s]", utils.KLineStr(pb.GetKind()), sum30, utils.TSStr(tsn))
+		logs.Info("[%s-%s] new ma30, sum30[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), sum30, utils.TSStr(tsn))
 		/// Debug
 	}
 

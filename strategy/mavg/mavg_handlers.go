@@ -29,7 +29,7 @@ func (p *posHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Eve
 	if pos == nil {
 		panic("keeper internal error")
 	}
-    printPos(pos)
+	printPos(pos)
 
 	money := kp.GetMoney(tick.Exchange, tick.Symbol)
 	if money == nil {
@@ -128,7 +128,8 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	}
 
 	///debug
-	logs.Info("macd signal, tsn[%s], ma7Slope[%f], ma30Slope[%f], diffSlope[%f], fsdiff[%f]", utils.TSStr(tsn), ma7Slope, ma30Slope, diffSlope, fsdiff)
+	logs.Info("[%s]macd signal, tsn[%s], ma7Slope[%f], ma30Slope[%f], diffSlope[%f], fsdiff[%f]",
+		tick.Symbol, utils.TSStr(tsn), ma7Slope, ma30Slope, diffSlope, fsdiff)
 	///
 
 	cp, ok := g.FindLastCrossPoint()
@@ -138,7 +139,7 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	}
 
 	///debug
-	logs.Info("macd signal, cp val[%f], cp time[%s]", cp.Val, utils.TSStr(cp.Ts))
+	logs.Info("[%s]macd signal, cp val[%f], cp time[%s]", tick.Symbol, cp.Val, utils.TSStr(cp.Ts))
 	///
 
 	/*
@@ -151,7 +152,7 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
 
 			///debug
-			logs.Info("产生买信号K1")
+			logs.Info("[%s]产生买信号K1", tick.Symbol)
 			///
 		}
 	}
@@ -162,7 +163,7 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 
 			///debug
-			logs.Info("产生卖信号K2")
+			logs.Info("[%s]产生卖信号K2", tick.Symbol)
 			///
 		}
 	}
@@ -173,14 +174,14 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	if ma7Slope < (-1*m.fkrate) && ma30Slope > 0 && diffSlope < m.dkrate {
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 		///debug
-		logs.Info("产生卖信号K3")
+		logs.Info("[%s]产生卖信号K3", tick.Symbol)
 		///
 	}
 
 	if ma7Slope > m.fkrate && ma30Slope < 0 && diffSlope < m.dkrate {
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 		///debug
-		logs.Info("产生卖信号K4")
+		logs.Info("[%s]产生卖信号K4", tick.Symbol)
 		///
 	}
 }
@@ -196,7 +197,7 @@ func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diff
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
 
 		///debug
-		logs.Info("产生买信号K5")
+		logs.Info("[%s]产生买信号K5", e.Symbol)
 		///
 	}
 
@@ -205,7 +206,7 @@ func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diff
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
 
 		///debug
-		logs.Info("产生卖信号K6")
+		logs.Info("[%s]产生买信号K6", e.Symbol)
 		///
 	}
 }
