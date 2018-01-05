@@ -45,7 +45,7 @@ func (t *MavgStrategy) Init(ctx krang.Context) {
 
 	// 需要关注的交易所和商品合约
 	t.exchange = "okex"
-	t.symbols = []string{"ltc_usd"}
+	t.symbols = []string{"ltc_usd", "etc_usd"}
 	t.contractTypes = []string{"this_week"}
 	t.makeupFllows()
 

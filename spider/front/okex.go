@@ -36,7 +36,7 @@ func newOKExQuoter() ExchangeQuote {
 			symbols: []string{"btc", "ltc"},
 			kinds:   []string{"this_week", "next_week", "quarter", "index"},
 		*/
-		symbols: []string{"ltc"},
+		symbols: []string{"ltc", "etc"},
 		kinds:   []string{"this_week"},
 	}
 }

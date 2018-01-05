@@ -16,31 +16,61 @@ import (
  3. 上一个仓位结束后，新建仓位的要冷静一段时间
 */
 
-type normalState struct {
+// 针对单个商品设置的参数
+type symbolParam struct {
 	stopLoseRate   float32 // 止损率
 	stopProfitRate float32 // 止盈率
 	minVol         float32 // 最小仓位，币
 	maxVol         float32 // 最大仓位，币
-	stepRate       float32 //单次下单占仓位比例
+	stepRate       float32 // 单次下单占仓位比例
 	marketSt       bool    // 是否使用市价单
-	openTimes      int32   // 开仓次数
-	openTimesLimit int32   // 开仓次数限制
-	level          int32   //本策略支持的杠杆
+	level          int32   // 本策略支持的杠杆
+
+	opTimes     int32   // 操作次数
+	profitTimes int32   // 盈利次数
+	profitVol   float32 // 盈利币数量
+	lossTimes   int32   // 亏损次数
+	lossVol     float32 // 亏损币数量
+}
+
+type normalState struct {
+	spm            map[string]*symbolParam // key:symbol
+	opTimes        int32                   // 总操作次数
+	profitTimes    int32                   // 总盈利次数
+	lossTimes      int32                   // 总亏损次数
+	lossTimesLimit int32                   // 总亏损次数限制
 }
 
 func NewNormalState() strategy.FSMState {
-	return &normalState{
+	ltcParam := &symbolParam{
 		stopLoseRate:   -0.1,
 		stopProfitRate: 0.2,
 		minVol:         0.1,
 		maxVol:         0.5,
 		stepRate:       0.01,
 		marketSt:       true,
-		openTimes:      0,
-		openTimesLimit: 5,
 		level:          10,
 	}
+	etcParam := &symbolParam{
+		stopLoseRate:   -0.1,
+		stopProfitRate: 0.2,
+		minVol:         1,
+		maxVol:         5,
+		stepRate:       0.1,
+		marketSt:       true,
+		level:          10,
+	}
+
+	st := &normalState{
+		spm:            make(map[string]*symbolParam),
+		lossTimesLimit: 5,
+	}
+	st.spm["ltc_usd"] = ltcParam
+	st.spm["etc_usd"] = etcParam
+	return st
 }
+
+/////////////////////////////////////////////////////
 
 func (t *normalState) Name() string {
 	return STATE_NAME_NORMAL
@@ -66,8 +96,8 @@ func (t *normalState) Enter() {
  在这个时间差内应该按照最新的头寸信息操作
 */
 func (t *normalState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) string {
-	if t.openTimes >= t.openTimesLimit {
-		logs.Info("已达到开仓次数限制，[%d]次", t.openTimesLimit)
+	if t.lossTimes >= t.lossTimesLimit {
+		logs.Info("亏损[%d]次，已达到亏损总次数限制, 策略暂时关闭", t.lossTimes)
 		return STATE_NAME_SHUTDOWN
 	}
 
@@ -76,26 +106,40 @@ func (t *normalState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.
 	return t.Name()
 }
 
+/////////////////////////////////////////////////////
+
+func (t *normalState) getSymbolParam(symbol string) *symbolParam {
+	v, ok := t.spm[symbol]
+	if !ok {
+		return nil
+	}
+	return v
+}
+
 func (t *normalState) handleLongPart(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) {
 	s, ok := evc.Macd.Signals[protocol.KL5Min]
 	if !ok || evc.Pos == nil {
+		return
+	}
+	sp := t.getSymbolParam(tick.Symbol)
+	if sp == nil {
 		return
 	}
 
 	if evc.Pos.LongAvai <= 0 {
 		if s == strategy.SIGNAL_BUY {
 			reason := "买入信号"
-			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENLONG, reason)
+			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENLONG, reason, sp)
 		}
 	} else {
-		if evc.Pos.LongFloatPRate <= t.stopLoseRate || evc.Pos.LongFloatPRate >= t.stopProfitRate {
+		if evc.Pos.LongFloatPRate <= sp.stopLoseRate || evc.Pos.LongFloatPRate >= sp.stopProfitRate {
 			reason := "超出止盈止损范围"
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason)
+			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
 		}
 
 		if s == strategy.SIGNAL_SELL {
 			reason := "卖出信号，平多"
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason)
+			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
 		}
 	}
 }
@@ -105,26 +149,30 @@ func (t *normalState) handleShortPart(ctx krang.Context, tick *krang.Tick, evc *
 	if !ok || evc.Pos == nil {
 		return
 	}
+	sp := t.getSymbolParam(tick.Symbol)
+	if sp == nil {
+		return
+	}
 
 	if evc.Pos.ShortAvai <= 0 {
 		if s == strategy.SIGNAL_SELL {
 			reason := "卖出信号"
-			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENSHORT, reason)
+			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENSHORT, reason, sp)
 		}
 	} else {
-		if evc.Pos.ShortFloatPRate <= t.stopLoseRate || evc.Pos.ShortFloatPRate >= t.stopProfitRate {
+		if evc.Pos.ShortFloatPRate <= sp.stopLoseRate || evc.Pos.ShortFloatPRate >= sp.stopProfitRate {
 			reason := "超出止盈止损范围"
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason)
+			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
 		}
 
 		if s == strategy.SIGNAL_BUY {
 			reason := "买入信号，平空"
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason)
+			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
 		}
 	}
 }
 
-func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32, reason string) {
+func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32, reason string, sp *symbolParam) {
 	trader := ctx.GetTrader(evc.Exchange)
 	if trader == nil {
 		return
@@ -133,18 +181,18 @@ func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strate
 	// 使用对手价，价格填0
 	var price float32 = 0
 	var pst = protocol.PRICE_ST_MARKET
-	if !t.marketSt {
+	if !sp.marketSt {
 		price = tick.Last
 		pst = protocol.PRICE_ST_LIMIT
 	}
 
 	// 计算合约张数
-	vol := evc.Money.Balance * t.stepRate
-	if vol < t.minVol {
-		vol = t.minVol
+	vol := evc.Money.Balance * sp.stepRate
+	if vol < sp.minVol {
+		vol = sp.minVol
 	}
-	if vol > t.maxVol {
-		vol = t.maxVol
+	if vol > sp.maxVol {
+		vol = sp.maxVol
 	}
 	amount := trader.ComputeContractAmount(evc.Symbol, tick.Last, vol)
 	if amount <= 0 {
@@ -160,18 +208,19 @@ func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strate
 		Amount:       amount,
 		OrderType:    ot,
 		PriceSt:      int32(pst),
-		Level:        t.level,
+		Level:        sp.level,
 		Vol:          vol,
 	}
 	trader.SetOrder(cmd)
 	evc.Pos.Disable()
-	t.openTimes += 1
+	t.opTimes += 1
+	sp.opTimes += 1
 
 	logs.Info("策略mavg开仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s]",
-		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, cmd.Vol, utils.OrderTypeStr(cmd.OrderType), t.level, reason)
+		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, cmd.Vol, utils.OrderTypeStr(cmd.OrderType), sp.level, reason)
 }
 
-func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32, reason string) {
+func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32, reason string, sp *symbolParam) {
 	trader := ctx.GetTrader(evc.Exchange)
 	if trader == nil {
 		return
@@ -179,13 +228,16 @@ func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strat
 
 	var amount int32 = 0
 	var bond float32 = 0
+	var rate float32 = 0
 	if ot == protocol.ORDERTYPE_CLOSELONG {
 		amount = int32(evc.Pos.LongAvai)
 		bond = evc.Pos.LongBond
+		rate = evc.Pos.LongFloatPRate
 	}
 	if ot == protocol.ORDERTYPE_CLOSESHORT {
 		amount = int32(evc.Pos.ShortAvai)
 		bond = evc.Pos.ShortBond
+		rate = evc.Pos.ShortFloatPRate
 	}
 	if amount <= 0 {
 		return
@@ -200,12 +252,32 @@ func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strat
 		Amount:       amount,
 		OrderType:    ot,
 		PriceSt:      protocol.PRICE_ST_MARKET,
-		Level:        t.level,
+		Level:        sp.level,
 		Vol:          0,
 	}
 	trader.SetOrder(cmd)
 	evc.Pos.Disable()
+	profit := bond * rate
 
-	logs.Info("策略mavg平仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s]",
-		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, bond, utils.OrderTypeStr(cmd.OrderType), t.level, reason)
+	logs.Info("策略mavg平仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s], 预计盈亏[%f%, %f]",
+		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, bond, utils.OrderTypeStr(cmd.OrderType),
+		sp.level, reason, rate*100, profit)
+
+	// 盈亏统计
+	t.updateStatics(cmd.Symbol, profit, sp)
+}
+
+func (t *normalState) updateStatics(symbol string, profit float32, sp *symbolParam) {
+	t.opTimes += 1
+	sp.opTimes += 1
+	if profit > 0 {
+		t.profitTimes += 1
+		sp.profitTimes += 1
+		sp.profitVol += profit
+	} else {
+		t.lossTimes += 1
+		sp.lossTimes += 1
+		sp.lossVol += (profit * -1)
+	}
+	logs.Info("策略mavg统计，[%s]盈利次数[%d], 币量[%f]，亏损次数[%d]，币量[%f]", symbol, sp.profitTimes, sp.profitVol, sp.lossTimes, sp.lossVol)
 }
