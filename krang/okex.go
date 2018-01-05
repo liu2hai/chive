@@ -149,6 +149,11 @@ func (t *okexTrade) TransferMoney(symbol string, transType int32, vol float32) {
  盈亏比：盈亏/固定保证金
 */
 func (t *okexTrade) computePosProfit(pos *Pos, pb *protocol.PBFutureTick) {
+	pos.LongFloatProfit = 0
+	pos.LongFloatPRate = 0
+	pos.ShortFloatProfit = 0
+	pos.ShortFloatPRate = 0
+
 	ua, ok := t.uam[pos.Symbol]
 	if !ok {
 		panic("computePosProfit can't find unit amout")
@@ -169,7 +174,7 @@ func (t *okexTrade) computePosProfit(pos *Pos, pb *protocol.PBFutureTick) {
 	}
 
 	if pos.ShortAmount > 0 {
-		if pos.ShortAmount <= 0 || pos.ShortBond <= 0 {
+		if pos.ShortPriceCost <= 0 || pos.ShortBond <= 0 {
 			return
 		}
 		suacost := ua / pos.ShortPriceCost

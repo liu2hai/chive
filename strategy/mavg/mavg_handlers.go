@@ -36,6 +36,12 @@ func (p *posHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Eve
 		panic("keeper internal error")
 	}
 
+	if !pos.IsValid {
+		logs.Info("[%s_%s_%s]等待头寸更新", pos.Exchange, pos.Symbol, pos.ContractType)
+		e.Pos = nil
+		return
+	}
+
 	e.Pos = pos
 	e.Money.Balance = money.Balance
 }

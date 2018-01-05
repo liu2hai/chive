@@ -68,6 +68,7 @@ type Pos struct {
 	Exchange     string
 	Symbol       string
 	ContractType string
+	IsValid      bool // 是否是最新的pos信息
 
 	LongAmount      float32 // 多头合约张数
 	LongAvai        float32 // 多头可平数量
@@ -99,8 +100,13 @@ func (p *Pos) OnTick(exchange string, pb *protocol.PBFutureTick) {
 	trader.computePosProfit(p, pb)
 }
 
+func (p *Pos) Disable() {
+	p.IsValid = false
+}
+
 // 清除数据部分
 func (p *Pos) Reset() {
+	p.IsValid = true
 	p.LongAmount = 0      // 多头合约张数
 	p.LongAvai = 0        // 多头可平数量
 	p.LongBond = 0        // 多头保证金
@@ -256,6 +262,7 @@ func (k *keeper) HandlePos(exchange string, pb *protocol.PBFRspQryPosInfo) bool 
 		}
 
 		v := pb.GetPosInfos()[0]
+		pos.IsValid = true
 		pos.LongAmount = v.GetBuyAmount()          // 多头合约张数
 		pos.LongAvai = v.GetBuyAvailable()         // 多头可平数量
 		pos.LongBond = v.GetBuyBond()              // 多头保证金
@@ -338,6 +345,7 @@ func (k *keeper) GetPos(exchange string, symbol string, contractType string) *Po
 		Exchange:     exchange,
 		Symbol:       symbol,
 		ContractType: contractType,
+		IsValid:      true,
 	}
 	p.Reset()
 	k.pos = append(k.pos, p)

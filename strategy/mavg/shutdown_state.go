@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/liu2hai/chive/krang"
+	"github.com/liu2hai/chive/logs"
 	"github.com/liu2hai/chive/strategy"
 )
 
@@ -30,6 +31,7 @@ func (t *shutdownState) Init() {
 }
 
 func (t *shutdownState) Enter() {
+	logs.Info("进入状态[%s]", t.Name())
 	t.ts = time.Now().Unix()
 }
 

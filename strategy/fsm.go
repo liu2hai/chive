@@ -148,6 +148,7 @@ func (t *FSM) Call(ctx krang.Context, tick *krang.Tick) {
 
 	if oldst.Name() != newStname {
 		logs.Info("[%s]fsm 从[%s]状态跳转到[%s]状态", t.name, oldst.Name(), newStname)
+		t.GetState().Enter()
 	}
 }
 

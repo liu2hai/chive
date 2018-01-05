@@ -298,8 +298,8 @@ func (t *okexArcher) setOrder(cmd *ArcherCmd) {
 	params["sign"] = buildMySign(params, t.secretkey)
 	eid, js := doHttpPost(t.resturl, resource, params)
 	handleRspSetOrderInfo(eid, js, t, cmd)
-	logs.Info("okex下单，商品[%s], 合约类型[%s], 合约张数[%d], 订单类型[%s], 价格[%f], 杠杠[%d]",
-		cmd.Symbol, cmd.ContractType, cmd.Amount, utils.OrderTypeStr(int32(cmd.OrderType)), cmd.Price, cmd.Level)
+	logs.Info("okex下单，商品[%s], 合约类型[%s], 合约张数[%d], 订单类型[%s], 价格[%f], 杠杠[%d], reqSerial[%d]",
+		cmd.Symbol, cmd.ContractType, cmd.Amount, utils.OrderTypeStr(int32(cmd.OrderType)), cmd.Price, cmd.Level, cmd.ReqSerial)
 }
 
 func handleRspSetOrderInfo(eid int, js *simplejson.Json, t *okexArcher, cmd *ArcherCmd) {
