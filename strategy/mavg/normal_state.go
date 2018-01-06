@@ -259,7 +259,7 @@ func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strat
 	evc.Pos.Disable()
 	profit := bond * rate
 
-	logs.Info("策略mavg平仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s], 预计盈亏[%f%, %f]",
+	logs.Info("策略mavg平仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s], 预计盈亏[%f%%, %f]",
 		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, bond, utils.OrderTypeStr(cmd.OrderType),
 		sp.level, reason, rate*100, profit)
 

@@ -150,10 +150,8 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	if ma7Slope >= m.fkrate && ma30Slope > m.skrate {
 		if cp.Fcs == protocol.FCS_DOWN2TOP && fsdiff >= m.fsdiff {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
-
-			///debug
 			logs.Info("[%s]产生买信号K1", tick.Symbol)
-			///
+			return
 		}
 	}
 
@@ -161,10 +159,8 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	if ma7Slope <= (-1*m.fkrate) && ma30Slope < (-1*m.skrate) {
 		if cp.Fcs == protocol.FCS_TOP2DOWN && fsdiff >= m.fsdiff {
 			e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
-
-			///debug
 			logs.Info("[%s]产生卖信号K2", tick.Symbol)
-			///
+			return
 		}
 	}
 
@@ -173,16 +169,14 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	*/
 	if ma7Slope < (-1*m.fkrate) && ma30Slope > 0 && diffSlope < m.dkrate {
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
-		///debug
 		logs.Info("[%s]产生卖信号K3", tick.Symbol)
-		///
+		return
 	}
 
 	if ma7Slope > m.fkrate && ma30Slope < 0 && diffSlope < m.dkrate {
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
-		///debug
 		logs.Info("[%s]产生卖信号K4", tick.Symbol)
-		///
+		return
 	}
 }
 
@@ -195,18 +189,14 @@ func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diff
 	// 斜率> 0 , 往右上斜，就是趋势向上
 	if ma7Slope >= m.fkrate && ma30Slope > m.skrate {
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
-
-		///debug
 		logs.Info("[%s]产生买信号K5", e.Symbol)
-		///
+		return
 	}
 
 	// 斜率< 0 , 往右下斜，就是趋势向下
 	if ma7Slope <= (-1*m.fkrate) && ma30Slope < (-1*m.skrate) {
 		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
-
-		///debug
 		logs.Info("[%s]产生买信号K6", e.Symbol)
-		///
+		return
 	}
 }
