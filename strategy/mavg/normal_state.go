@@ -81,6 +81,9 @@ func (t *normalState) Init() {
 
 func (t *normalState) Enter() {
 	logs.Info("进入状态[%s]", t.Name())
+
+	// 重新进入normal state，增加限制
+	t.lossTimesLimit += 5
 }
 
 /*
@@ -97,7 +100,7 @@ func (t *normalState) Enter() {
 */
 func (t *normalState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) string {
 	if t.lossTimes >= t.lossTimesLimit {
-		logs.Info("亏损[%d]次，已达到亏损总次数限制, 策略暂时关闭", t.lossTimes)
+		logs.Info("亏损[%d]次，已达到亏损总次数[%d]限制, 策略暂时关闭", t.lossTimes, t.lossTimesLimit)
 		return STATE_NAME_SHUTDOWN
 	}
 
