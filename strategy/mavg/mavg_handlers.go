@@ -81,7 +81,7 @@ func printPos(pos *krang.Pos) {
   4. 确定交叉点的疏密程度，也就在某个时间段内的交叉点个数，说明趋势是否明显
 */
 
-type macdHandler struct {
+type klParam struct {
 	klkind   int32
 	distance int32
 	unit     int32
@@ -91,8 +91,13 @@ type macdHandler struct {
 	fsdiff   float32 // 快线和慢线的差距值
 }
 
+type macdHandler struct {
+	k5mp  *klParam
+	k15mp *klParam
+}
+
 func NewMACDHandler() strategy.FSMHandler {
-	return &macdHandler{
+	p5 := &klParam{
 		klkind:   protocol.KL5Min, // 使用5分钟k线
 		distance: 3,               // 使用N根k线计算斜率
 		unit:     5 * 60,
@@ -101,23 +106,52 @@ func NewMACDHandler() strategy.FSMHandler {
 		dkrate:   0.03,
 		fsdiff:   1.2,
 	}
+	p15 := &klParam{
+		klkind:   protocol.KL15Min,
+		distance: 3,
+		unit:     15 * 60,
+		fkrate:   0.1,
+		skrate:   0.02,
+		dkrate:   0.01,
+		fsdiff:   1.1,
+	}
+
+	return &macdHandler{
+		k5mp:  p5,
+		k15mp: p15,
+	}
 }
 
 func (m *macdHandler) Name() string {
 	return "macd_handler"
 }
 
+func (m *macdHandler) getKlParam(klkind int32) *klParam {
+	if klkind == protocol.KL5Min {
+		return m.k5mp
+	} else if klkind == protocol.KL15Min {
+		return m.k15mp
+	}
+	return nil
+}
+
 func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.EventCompose) {
-	e.Macd.Signals[m.klkind] = 0
+	m.doTick(ctx, tick, e, protocol.KL5Min)
+	m.doTick(ctx, tick, e, protocol.KL15Min)
+}
+
+func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.EventCompose, klkind int32) {
+	e.Macd.Signals[klkind] = 0
 	db := utils.MakeupSinfo(e.Exchange, e.Symbol, e.ContractType)
-	g := ctx.GetQuoteDB().QueryMAGraphic(db, m.klkind)
-	if g == nil {
+	g := ctx.GetQuoteDB().QueryMAGraphic(db, klkind)
+	kp := m.getKlParam(klkind)
+	if g == nil || kp == nil {
 		return
 	}
 
 	// 取最新K线的时间，这样在回测里才有效
 	tsn := g.GetLastKLTimeStamp()
-	tsStart := tsn - int64(m.distance*m.unit)
+	tsStart := tsn - int64(kp.distance*kp.unit)
 	ma7Slope := g.ComputeMa7SlopeFactor(tsStart, tsn)
 	ma30Slope := g.ComputeMa30SlopeFactor(tsStart, tsn)
 	diffSlope := g.ComputeDiffSlopeFactor(tsStart, tsn)
@@ -134,7 +168,7 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 
 	cp, ok := g.FindLastCrossPoint()
 	if !ok {
-		m.noCrossPointCase(ma7Slope, ma30Slope, diffSlope, e)
+		m.noCrossPointCase(ma7Slope, ma30Slope, diffSlope, e, klkind)
 		return
 	}
 
@@ -147,18 +181,18 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	*/
 
 	// 斜率> 0 , 往右上斜，就是趋势向上
-	if ma7Slope >= m.fkrate && ma30Slope > m.skrate {
-		if cp.Fcs == protocol.FCS_DOWN2TOP && fsdiff >= m.fsdiff {
-			e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
+	if ma7Slope >= kp.fkrate && ma30Slope > kp.skrate {
+		if cp.Fcs == protocol.FCS_DOWN2TOP && fsdiff >= kp.fsdiff {
+			e.Macd.Signals[klkind] = strategy.SIGNAL_BUY
 			logs.Info("[%s]产生买信号K1", tick.Symbol)
 			return
 		}
 	}
 
 	// 斜率< 0 , 往右下斜，就是趋势向下
-	if ma7Slope <= (-1*m.fkrate) && ma30Slope < (-1*m.skrate) {
-		if cp.Fcs == protocol.FCS_TOP2DOWN && fsdiff >= m.fsdiff {
-			e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
+	if ma7Slope <= (-1*kp.fkrate) && ma30Slope < (-1*kp.skrate) {
+		if cp.Fcs == protocol.FCS_TOP2DOWN && fsdiff >= kp.fsdiff {
+			e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
 			logs.Info("[%s]产生卖信号K2", tick.Symbol)
 			return
 		}
@@ -167,35 +201,40 @@ func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	/*
 	  其次要判断拐点的到来
 	*/
-	if ma7Slope < (-1*m.fkrate) && ma30Slope > 0 && diffSlope < m.dkrate {
-		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
+	if ma7Slope < (-1*kp.fkrate) && ma30Slope > 0 && diffSlope < kp.dkrate {
+		e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
 		logs.Info("[%s]产生卖信号K3", tick.Symbol)
 		return
 	}
 
-	if ma7Slope > m.fkrate && ma30Slope < 0 && diffSlope < m.dkrate {
-		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
+	if ma7Slope > kp.fkrate && ma30Slope < 0 && diffSlope < kp.dkrate {
+		e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
 		logs.Info("[%s]产生卖信号K4", tick.Symbol)
 		return
 	}
 }
 
 // 在diffSlope变大的时候，也就是快线和慢线差距变大的时候，才考虑下单
-func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diffSlope float32, e *strategy.EventCompose) {
-	if diffSlope <= m.dkrate {
+func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diffSlope float32, e *strategy.EventCompose, klkind int32) {
+	kp := m.getKlParam(klkind)
+	if kp == nil {
+		return
+	}
+
+	if diffSlope <= kp.dkrate {
 		return
 	}
 
 	// 斜率> 0 , 往右上斜，就是趋势向上
-	if ma7Slope >= m.fkrate && ma30Slope > m.skrate {
-		e.Macd.Signals[m.klkind] = strategy.SIGNAL_BUY
+	if ma7Slope >= kp.fkrate && ma30Slope > kp.skrate {
+		e.Macd.Signals[klkind] = strategy.SIGNAL_BUY
 		logs.Info("[%s]产生买信号K5", e.Symbol)
 		return
 	}
 
 	// 斜率< 0 , 往右下斜，就是趋势向下
-	if ma7Slope <= (-1*m.fkrate) && ma30Slope < (-1*m.skrate) {
-		e.Macd.Signals[m.klkind] = strategy.SIGNAL_SELL
+	if ma7Slope <= (-1*kp.fkrate) && ma30Slope < (-1*kp.skrate) {
+		e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
 		logs.Info("[%s]产生买信号K6", e.Symbol)
 		return
 	}

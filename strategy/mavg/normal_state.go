@@ -44,7 +44,7 @@ type normalState struct {
 func NewNormalState() strategy.FSMState {
 	ltcParam := &symbolParam{
 		stopLoseRate:   -0.1,
-		stopProfitRate: 0.2,
+		stopProfitRate: 0.15,
 		minVol:         0.1,
 		maxVol:         0.5,
 		stepRate:       0.1,
@@ -53,7 +53,7 @@ func NewNormalState() strategy.FSMState {
 	}
 	etcParam := &symbolParam{
 		stopLoseRate:   -0.1,
-		stopProfitRate: 0.2,
+		stopProfitRate: 0.15,
 		minVol:         1,
 		maxVol:         5,
 		stepRate:       0.1,

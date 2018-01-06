@@ -72,4 +72,7 @@ func TestIntersect(t *testing.T) {
 	} else {
 		fmt.Println("no intersect, cp[ts, val, fcs]", cp4.Ts, cp4.Val, cp4.Fcs)
 	}
+
+	fmt.Printf("策略mavg平仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s], 预计盈亏[%f%%, %f]\n",
+		"okex", "ltc_usd", "this_week", 2, 1.3, "kk", 10, "ssd", 10.3, 0.5)
 }
