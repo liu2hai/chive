@@ -15,7 +15,8 @@ import (
 */
 
 type shutdownState struct {
-	ts int64 // 上次关闭的时间
+	ts            int64 // 上次关闭的时间
+	shutdownTimes int32 // 进入关闭状态次数
 }
 
 func NewShutdownState() strategy.FSMState {
@@ -31,8 +32,9 @@ func (t *shutdownState) Init() {
 }
 
 func (t *shutdownState) Enter() {
-	logs.Info("进入状态[%s]", t.Name())
 	t.ts = time.Now().Unix()
+	t.shutdownTimes += 1
+	logs.Info("进入状态[%s], 次数[%d]", t.Name(), t.shutdownTimes)
 }
 
 // 关闭后，暂停一个小时后重开

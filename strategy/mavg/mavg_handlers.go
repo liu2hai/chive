@@ -60,13 +60,13 @@ func printPos(pos *krang.Pos) {
 	fmt.Println("多头浮动盈亏比例：", pos.LongFloatPRate)
 	fmt.Println(" ")
 	fmt.Println("空头合约张数：", pos.ShortAmount)
-	fmt.Println("空多头可平合约张数: ", pos.ShortAvai)
-	fmt.Println("空多头保证金: ", pos.ShortBond)
-	fmt.Println("空多头开仓平均价：", pos.ShortPriceAvg)
-	fmt.Println("空多头结算基准价：", pos.ShortPriceCost)
-	fmt.Println("空多头平仓盈亏：", pos.ShortCloseProfit)
-	fmt.Println("空多头浮动盈亏：", pos.ShortFloatProfit)
-	fmt.Println("空多头浮动盈亏比例：", pos.ShortFloatPRate)
+	fmt.Println("空头可平合约张数: ", pos.ShortAvai)
+	fmt.Println("空头保证金: ", pos.ShortBond)
+	fmt.Println("空头开仓平均价：", pos.ShortPriceAvg)
+	fmt.Println("空头结算基准价：", pos.ShortPriceCost)
+	fmt.Println("空头平仓盈亏：", pos.ShortCloseProfit)
+	fmt.Println("空头浮动盈亏：", pos.ShortFloatProfit)
+	fmt.Println("空头浮动盈亏比例：", pos.ShortFloatPRate)
 	fmt.Println("-------------")
 }
 
@@ -101,10 +101,10 @@ func NewMACDHandler() strategy.FSMHandler {
 		klkind:   protocol.KL5Min, // 使用5分钟k线
 		distance: 3,               // 使用N根k线计算斜率
 		unit:     5 * 60,
-		fkrate:   0.12,
-		skrate:   0.04,
-		dkrate:   0.03,
-		fsdiff:   0.9,
+		fkrate:   0.15,
+		skrate:   0.06,
+		dkrate:   0.05,
+		fsdiff:   1.0,
 	}
 	p15 := &klParam{
 		klkind:   protocol.KL15Min,
