@@ -145,6 +145,7 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	db := utils.MakeupSinfo(e.Exchange, e.Symbol, e.ContractType)
 	g := ctx.GetQuoteDB().QueryMAGraphic(db, klkind)
 	kp := m.getKlParam(klkind)
+	strKind := utils.KLineStr(klkind)
 	if g == nil || kp == nil {
 		return
 	}
@@ -162,8 +163,8 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	}
 
 	///debug
-	logs.Info("[%s]macd signal, tsn[%s], ma7Slope[%f], ma30Slope[%f], diffSlope[%f], fsdiff[%f]",
-		tick.Symbol, utils.TSStr(tsn), ma7Slope, ma30Slope, diffSlope, fsdiff)
+	logs.Info("[%s-%s]macd signal, tsn[%s], ma7Slope[%f], ma30Slope[%f], diffSlope[%f], fsdiff[%f]",
+		tick.Symbol, strKind, utils.TSStr(tsn), ma7Slope, ma30Slope, diffSlope, fsdiff)
 	///
 
 	cp, ok := g.FindLastCrossPoint()
@@ -173,7 +174,7 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	}
 
 	///debug
-	logs.Info("[%s]macd signal, cp val[%f], cp time[%s]", tick.Symbol, cp.Val, utils.TSStr(cp.Ts))
+	logs.Info("[%s-%s]macd signal, cp val[%f], cp time[%s]", tick.Symbol, strKind, cp.Val, utils.TSStr(cp.Ts))
 	///
 
 	/*
@@ -184,7 +185,7 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	if ma7Slope >= kp.fkrate && ma30Slope > kp.skrate {
 		if cp.Fcs == protocol.FCS_DOWN2TOP && fsdiff >= kp.fsdiff {
 			e.Macd.Signals[klkind] = strategy.SIGNAL_BUY
-			logs.Info("[%s]产生买信号K1", tick.Symbol)
+			logs.Info("[%s-%s]产生买信号K1", tick.Symbol, strKind)
 			return
 		}
 	}
@@ -193,7 +194,7 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	if ma7Slope <= (-1*kp.fkrate) && ma30Slope < (-1*kp.skrate) {
 		if cp.Fcs == protocol.FCS_TOP2DOWN && fsdiff >= kp.fsdiff {
 			e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
-			logs.Info("[%s]产生卖信号K2", tick.Symbol)
+			logs.Info("[%s-%s]产生卖信号K2", tick.Symbol, strKind)
 			return
 		}
 	}
@@ -201,15 +202,15 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	/*
 	  其次要判断拐点的到来
 	*/
-	if ma7Slope < (-1*kp.fkrate) && ma30Slope > 0 && diffSlope < kp.dkrate {
+	if ma7Slope < (-1*kp.fkrate) && diffSlope < (-1*kp.dkrate) {
 		e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
-		logs.Info("[%s]产生卖信号K3", tick.Symbol)
+		logs.Info("[%s-%s]产生卖信号K3", tick.Symbol, strKind)
 		return
 	}
 
-	if ma7Slope > kp.fkrate && ma30Slope < 0 && diffSlope < kp.dkrate {
+	if ma7Slope > kp.fkrate && diffSlope < (-1*kp.dkrate) {
 		e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
-		logs.Info("[%s]产生卖信号K4", tick.Symbol)
+		logs.Info("[%s-%s]产生卖信号K4", tick.Symbol, strKind)
 		return
 	}
 }
@@ -228,14 +229,14 @@ func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diff
 	// 斜率> 0 , 往右上斜，就是趋势向上
 	if ma7Slope >= kp.fkrate && ma30Slope > kp.skrate {
 		e.Macd.Signals[klkind] = strategy.SIGNAL_BUY
-		logs.Info("[%s]产生买信号K5", e.Symbol)
+		logs.Info("[%s-%s]产生买信号K5", e.Symbol, strKind)
 		return
 	}
 
 	// 斜率< 0 , 往右下斜，就是趋势向下
 	if ma7Slope <= (-1*kp.fkrate) && ma30Slope < (-1*kp.skrate) {
 		e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
-		logs.Info("[%s]产生买信号K6", e.Symbol)
+		logs.Info("[%s-%s]产生买信号K6", e.Symbol, strKind)
 		return
 	}
 }
