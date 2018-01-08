@@ -25,7 +25,7 @@ func (t *radicalState) Name() string {
 func (t *radicalState) Init() {
 }
 
-func (t *radicalState) Enter() {
+func (t *radicalState) Enter(ctx krang.Context) {
 }
 
 func (t *radicalState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) string {

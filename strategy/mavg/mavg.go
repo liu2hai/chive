@@ -50,7 +50,7 @@ func (t *MavgStrategy) Init(ctx krang.Context) {
 	t.makeupFllows()
 
 	// 初始化FSM
-	t.fsm = strategy.NewFSM()
+	t.fsm = strategy.NewFSM(THIS_STRATEGY_NAME)
 
 	shutst := NewShutdownState()
 	shutst.Init()

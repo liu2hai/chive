@@ -103,7 +103,7 @@ func NewMACDHandler() strategy.FSMHandler {
 		unit:     5 * 60,
 		fkrate:   0.15,
 		skrate:   0.06,
-		dkrate:   0.05,
+		dkrate:   0.03,
 		fsdiff:   1.0,
 	}
 	p15 := &klParam{

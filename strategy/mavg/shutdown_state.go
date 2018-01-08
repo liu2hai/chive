@@ -31,7 +31,7 @@ func (t *shutdownState) Init() {
 	t.ts = time.Now().Unix()
 }
 
-func (t *shutdownState) Enter() {
+func (t *shutdownState) Enter(ctx krang.Context) {
 	t.ts = time.Now().Unix()
 	t.shutdownTimes += 1
 	logs.Info("进入状态[%s], 次数[%d]", t.Name(), t.shutdownTimes)

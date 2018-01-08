@@ -24,7 +24,7 @@ const (
 type FSMState interface {
 	Name() string
 	Init()
-	Enter()
+	Enter(ctx krang.Context)
 	Decide(ctx krang.Context, tick *krang.Tick, e *EventCompose) string
 }
 
@@ -87,9 +87,9 @@ type FSM struct {
 	states   map[string]FSMState // 全部的状态
 }
 
-func NewFSM() *FSM {
+func NewFSM(name string) *FSM {
 	return &FSM{
-		name:     "empty",
+		name:     name,
 		state:    nil,
 		handlers: make([]FSMHandler, 0),
 		evc:      newEventCompose(),
@@ -148,7 +148,7 @@ func (t *FSM) Call(ctx krang.Context, tick *krang.Tick) {
 
 	if oldst.Name() != newStname {
 		logs.Info("[%s]fsm 从[%s]状态跳转到[%s]状态", t.name, oldst.Name(), newStname)
-		t.GetState().Enter()
+		t.GetState().Enter(ctx)
 	}
 }
 

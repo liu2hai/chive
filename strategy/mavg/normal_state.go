@@ -43,8 +43,8 @@ type normalState struct {
 
 func NewNormalState() strategy.FSMState {
 	ltcParam := &symbolParam{
-		stopLoseRate:   -0.15,
-		stopProfitRate: 0.15,
+		stopLoseRate:   -0.14,
+		stopProfitRate: 0.16,
 		minVol:         0.1,
 		maxVol:         0.5,
 		stepRate:       0.1,
@@ -52,7 +52,7 @@ func NewNormalState() strategy.FSMState {
 		level:          10,
 	}
 	etcParam := &symbolParam{
-		stopLoseRate:   -0.1,
+		stopLoseRate:   -0.15,
 		stopProfitRate: 0.15,
 		minVol:         1,
 		maxVol:         5,
@@ -79,11 +79,14 @@ func (t *normalState) Name() string {
 func (t *normalState) Init() {
 }
 
-func (t *normalState) Enter() {
+func (t *normalState) Enter(ctx krang.Context) {
 	logs.Info("进入状态[%s]", t.Name())
 
 	// 重新进入normal state，增加限制
 	t.lossTimesLimit += 5
+
+	// 重新读取头寸信息
+	mavg.queryAllPos(ctx)
 }
 
 /*
