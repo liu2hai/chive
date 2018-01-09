@@ -102,7 +102,7 @@ func NewMACDHandler() strategy.FSMHandler {
 		distance: 3,               // 使用N根k线计算斜率
 		unit:     5 * 60,
 		fkrate:   0.15,
-		skrate:   0.06,
+		skrate:   0.04,
 		dkrate:   0.03,
 		fsdiff:   1.0,
 	}
