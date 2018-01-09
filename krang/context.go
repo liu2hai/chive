@@ -28,6 +28,7 @@ type Tick struct {
 	Exchange     string
 	Symbol       string
 	ContractType string
+	Timestamp    uint64
 
 	Vol  float32 // tick内成交量
 	High float32 // tick内最高价

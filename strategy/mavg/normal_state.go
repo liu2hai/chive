@@ -18,6 +18,7 @@ import (
 
 // 针对单个商品设置的参数
 type symbolParam struct {
+	klkind         int32   // 使用的K线信号
 	stopLoseRate   float32 // 止损率
 	stopProfitRate float32 // 止盈率
 	minVol         float32 // 最小仓位，币
@@ -43,6 +44,7 @@ type normalState struct {
 
 func NewNormalState() strategy.FSMState {
 	ltcParam := &symbolParam{
+		klkind:         protocol.KL5Min,
 		stopLoseRate:   -0.14,
 		stopProfitRate: 0.16,
 		minVol:         0.1,
@@ -52,8 +54,9 @@ func NewNormalState() strategy.FSMState {
 		level:          10,
 	}
 	etcParam := &symbolParam{
+		klkind:         protocol.KL15Min,
 		stopLoseRate:   -0.15,
-		stopProfitRate: 0.15,
+		stopProfitRate: 0.20,
 		minVol:         1,
 		maxVol:         5,
 		stepRate:       0.1,
@@ -109,6 +112,11 @@ func (t *normalState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.
 
 	t.handleLongPart(ctx, tick, evc)
 	t.handleShortPart(ctx, tick, evc)
+
+	if evc.HasEmergency() {
+		logs.Info("紧急情况, 策略暂时关闭")
+		return STATE_NAME_SHUTDOWN
+	}
 	return t.Name()
 }
 
@@ -123,12 +131,13 @@ func (t *normalState) getSymbolParam(symbol string) *symbolParam {
 }
 
 func (t *normalState) handleLongPart(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) {
-	s, ok := evc.Macd.Signals[protocol.KL5Min]
-	if !ok || evc.Pos == nil {
-		return
-	}
 	sp := t.getSymbolParam(tick.Symbol)
 	if sp == nil {
+		return
+	}
+
+	s, ok := evc.Macd.Signals[sp.klkind]
+	if !ok || evc.Pos == nil {
 		return
 	}
 
@@ -137,26 +146,36 @@ func (t *normalState) handleLongPart(ctx krang.Context, tick *krang.Tick, evc *s
 			reason := "买入信号"
 			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENLONG, reason, sp)
 		}
-	} else {
-		if evc.Pos.LongFloatPRate <= sp.stopLoseRate || evc.Pos.LongFloatPRate >= sp.stopProfitRate {
-			reason := "超出止盈止损范围"
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
-		}
+		return
+	}
 
-		if s == strategy.SIGNAL_SELL {
-			reason := "卖出信号，平多"
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
-		}
+	// 有多头头寸情况
+	if s == strategy.SIGNAL_EMERGENCY {
+		reason := "紧急情况"
+		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
+		return
+	}
+
+	if evc.Pos.LongFloatPRate <= sp.stopLoseRate || evc.Pos.LongFloatPRate >= sp.stopProfitRate {
+		reason := "超出止盈止损范围"
+		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
+		return
+	}
+
+	if s == strategy.SIGNAL_SELL {
+		reason := "卖出信号，平多"
+		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
 	}
 }
 
 func (t *normalState) handleShortPart(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) {
-	s, ok := evc.Macd.Signals[protocol.KL5Min]
-	if !ok || evc.Pos == nil {
-		return
-	}
 	sp := t.getSymbolParam(tick.Symbol)
 	if sp == nil {
+		return
+	}
+
+	s, ok := evc.Macd.Signals[sp.klkind]
+	if !ok || evc.Pos == nil {
 		return
 	}
 
@@ -165,16 +184,25 @@ func (t *normalState) handleShortPart(ctx krang.Context, tick *krang.Tick, evc *
 			reason := "卖出信号"
 			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENSHORT, reason, sp)
 		}
-	} else {
-		if evc.Pos.ShortFloatPRate <= sp.stopLoseRate || evc.Pos.ShortFloatPRate >= sp.stopProfitRate {
-			reason := "超出止盈止损范围"
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
-		}
+		return
+	}
 
-		if s == strategy.SIGNAL_BUY {
-			reason := "买入信号，平空"
-			t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
-		}
+	// 有空头头寸情况
+	if s == strategy.SIGNAL_EMERGENCY {
+		reason := "紧急情况"
+		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
+		return
+	}
+
+	if evc.Pos.ShortFloatPRate <= sp.stopLoseRate || evc.Pos.ShortFloatPRate >= sp.stopProfitRate {
+		reason := "超出止盈止损范围"
+		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
+		return
+	}
+
+	if s == strategy.SIGNAL_BUY {
+		reason := "买入信号，平空"
+		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
 	}
 }
 

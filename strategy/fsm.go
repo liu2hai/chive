@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	SIGNAL_BUY  = 1
-	SIGNAL_SELL = 2
+	SIGNAL_BUY       = 1
+	SIGNAL_SELL      = 2
+	SIGNAL_EMERGENCY = 3
 )
 
 /*
@@ -73,6 +74,15 @@ func (e *EventCompose) reset() {
 	for k, _ := range e.Macd.Signals {
 		e.Macd.Signals[k] = 0
 	}
+}
+
+func (e *EventCompose) HasEmergency() bool {
+	for _, v := range e.Macd.Signals {
+		if v == SIGNAL_EMERGENCY {
+			return true
+		}
+	}
+	return false
 }
 
 /*

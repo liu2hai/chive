@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	hbInterval = 20 //发送心跳间隔，单位second
+	hbInterval = 5 //发送心跳间隔，单位second
 	cmdExit    = -1
 )
 
@@ -339,6 +339,8 @@ contractId(long):合约ID
 high(double):24小时最高价格
 low(double):24小时最低价格
 
+okex最新的ticker接口去掉了时间戳，没办法，只能用本地时间代替
+
 */
 func parseNtfTicker(symbol string, kind string, ch string, js *simplejson.Json) error {
 	pb := &protocol.PBFutureTick{}
@@ -371,7 +373,8 @@ func parseNtfTicker(symbol string, kind string, ch string, js *simplejson.Json) 
 	sinfo.Exchange = proto.String("okex")
 	sinfo.Symbol = proto.String(symbol + "_usd")
 	sinfo.ContractType = proto.String(kind)
-	sinfo.Timestamp = proto.Uint64(0)
+	ss := time.Now().Unix() * 1000
+	sinfo.Timestamp = proto.Uint64(uint64(ss))
 	pb.Sinfo = sinfo
 	okexQuoteReply(protocol.FID_QUOTE_TICK, pb)
 	return nil

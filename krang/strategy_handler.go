@@ -32,6 +32,7 @@ func (t *strategyHandler) HandleMessage(p protocol.Package, key string) bool {
 		Exchange:     pb.GetSinfo().GetExchange(),
 		Symbol:       pb.GetSinfo().GetSymbol(),
 		ContractType: pb.GetSinfo().GetContractType(),
+		Timestamp:    pb.GetSinfo().GetTimestamp(),
 		Vol:          pb.GetVol(),
 		High:         pb.GetHigh(),
 		Low:          pb.GetLow(),

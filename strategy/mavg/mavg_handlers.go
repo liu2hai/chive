@@ -152,6 +152,18 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 
 	// 取最新K线的时间，这样在回测里才有效
 	tsn := g.GetLastKLTimeStamp()
+	tickTime := int64(tick.Timestamp / 1000)
+
+	// tick的时间和kline的时间相差太多，说明kline没有及时更新
+	// 实际运行过程中发现，有时服务器会停止推送kline
+	du := tickTime - tsn
+	if du < 0 || du > int64(kp.unit*2) {
+		logs.Error("[%s-%s]tick时间[%s]和最新kline时间[%s]相差太多，策略应停止。", tick.Symbol, strKind,
+			utils.TSStr(tickTime), utils.TSStr(tsn))
+		e.Macd.Signals[klkind] = strategy.SIGNAL_EMERGENCY
+		return
+	}
+
 	tsStart := tsn - int64(kp.distance*kp.unit)
 	ma7Slope := g.ComputeMa7SlopeFactor(tsStart, tsn)
 	ma30Slope := g.ComputeMa30SlopeFactor(tsStart, tsn)
@@ -218,6 +230,7 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 // 在diffSlope变大的时候，也就是快线和慢线差距变大的时候，才考虑下单
 func (m *macdHandler) noCrossPointCase(ma7Slope float32, ma30Slope float32, diffSlope float32, e *strategy.EventCompose, klkind int32) {
 	kp := m.getKlParam(klkind)
+	strKind := utils.KLineStr(klkind)
 	if kp == nil {
 		return
 	}

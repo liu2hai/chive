@@ -129,17 +129,18 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 			// 同一根K线数据
 			r.kl.Remove(r.kl.Back())
 			r.kl.PushBack(k)
+			r.mag.kts = tsn
 			return 0
 		}
 	}
 
 	r.kl.PushBack(k)
+	r.mag.kts = tsn
 	r.kc += 1
 	if r.kc > max_rbf_len {
 		r.kl.Remove(r.kl.Front())
 		r.kc -= 1
 	}
-	r.mag.kts = tsn
 
 	/// Debug
 	logs.Info("[%s-%s] new kline, close[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), k.close, utils.TSStr(tsn))
