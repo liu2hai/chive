@@ -7,10 +7,11 @@ type FeedBack interface {
 }
 
 type FeedData struct {
-	Stname    string
-	ReqSerial uint32
-	Tid       uint32
-	Data      string
+	Stname     string
+	ReqSerial  uint32
+	Tid        uint32
+	Data       string
+	CheckTimes int32
 }
 
 type feedback struct {
@@ -29,10 +30,11 @@ func (t *feedback) Add(stname string, reqSerial uint32, tid uint32, data string)
 		return
 	}
 	d := &FeedData{
-		Stname:    stname,
-		ReqSerial: reqSerial,
-		Tid:       tid,
-		Data:      data,
+		Stname:     stname,
+		ReqSerial:  reqSerial,
+		Tid:        tid,
+		Data:       data,
+		CheckTimes: 0,
 	}
 	t.m[reqSerial] = d
 }

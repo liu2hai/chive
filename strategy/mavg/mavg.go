@@ -35,6 +35,8 @@ const (
 	STATE_NAME_RADICAL  = "radical"
 )
 
+const FB_MAX_CHECKTIMES = 3 // 反馈中未完成命令检查次数
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -91,7 +93,13 @@ func (t *MavgStrategy) CheckFeedBack(ctx krang.Context) bool {
 
 	for _, v := range datas {
 		logs.Info("[%s]策略回馈中没有执行完成的命令：tid[%d], reqserial[%d]", THIS_STRATEGY_NAME, v.Tid, v.ReqSerial)
-		fb.Remove(v.ReqSerial)
+		v.CheckTimes += 1
+		if v.CheckTimes >= FB_MAX_CHECKTIMES {
+			fb.Remove(v.ReqSerial)
+		}
+
+		// 没有反馈都去及时更新头寸
+		t.queryAllPos(ctx)
 	}
 	return true
 }
