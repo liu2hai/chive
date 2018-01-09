@@ -160,7 +160,7 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	// tick的时间和kline的时间相差太多，说明kline没有及时更新
 	// 实际运行过程中发现，有时服务器会停止推送kline
 	du := tickTime - tsn
-	if du < 0 || du > int64(kp.unit*2) {
+	if du > int64(kp.unit*2) || du < int64(kp.unit*-1) {
 		logs.Error("[%s-%s]tick时间[%s]和最新kline时间[%s]相差太多，策略应停止。", tick.Symbol, strKind,
 			utils.TSStr(tickTime), utils.TSStr(tsn))
 		e.Macd.Signals[klkind] = strategy.SIGNAL_EMERGENCY

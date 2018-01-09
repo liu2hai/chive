@@ -125,7 +125,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 			return 0
 		}
 
-		if diff >= 0 && diff <= r.mag.SegmentSecs() {
+		if diff >= 0 && diff < r.mag.SegmentSecs() {
 			// 同一根K线数据
 			r.kl.Remove(r.kl.Back())
 			r.kl.PushBack(k)
