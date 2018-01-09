@@ -153,6 +153,9 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 	// 取最新K线的时间，这样在回测里才有效
 	tsn := g.GetLastKLTimeStamp()
 	tickTime := int64(tick.Timestamp / 1000)
+	if tsn <= 0 || tickTime <= 0 {
+		return
+	}
 
 	// tick的时间和kline的时间相差太多，说明kline没有及时更新
 	// 实际运行过程中发现，有时服务器会停止推送kline

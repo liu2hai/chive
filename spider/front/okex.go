@@ -373,8 +373,8 @@ func parseNtfTicker(symbol string, kind string, ch string, js *simplejson.Json) 
 	sinfo.Exchange = proto.String("okex")
 	sinfo.Symbol = proto.String(symbol + "_usd")
 	sinfo.ContractType = proto.String(kind)
-	ss := time.Now().Unix() * 1000
-	sinfo.Timestamp = proto.Uint64(uint64(ss))
+	tt := uint64(time.Now().Unix() * 1000)
+	sinfo.Timestamp = proto.Uint64(tt)
 	pb.Sinfo = sinfo
 	okexQuoteReply(protocol.FID_QUOTE_TICK, pb)
 	return nil
