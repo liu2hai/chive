@@ -101,9 +101,9 @@ func NewMACDHandler() strategy.FSMHandler {
 		klkind:   protocol.KL5Min, // 使用5分钟k线
 		distance: 3,               // 使用N根k线计算斜率
 		unit:     5 * 60,
-		fkrate:   0.15,
-		skrate:   0.04,
-		dkrate:   0.03,
+		fkrate:   0.18,
+		skrate:   0.2,
+		dkrate:   0.1,
 		fsdiff:   1.0,
 	}
 	p15 := &klParam{
@@ -216,6 +216,8 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 
 	/*
 	  其次要判断拐点的到来
+	  快线向下，慢线向上
+	  快线向上，慢线向下
 	*/
 	if ma7Slope < (-1*kp.fkrate) && diffSlope < (-1*kp.dkrate) {
 		e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
@@ -223,9 +225,9 @@ func (m *macdHandler) doTick(ctx krang.Context, tick *krang.Tick, e *strategy.Ev
 		return
 	}
 
-	if ma7Slope > kp.fkrate && diffSlope < (-1*kp.dkrate) {
-		e.Macd.Signals[klkind] = strategy.SIGNAL_SELL
-		logs.Info("[%s-%s]产生卖信号K4", tick.Symbol, strKind)
+	if ma7Slope > kp.fkrate && ma30Slope <= (-1*kp.skrate) && diffSlope < (-1*kp.dkrate) {
+		e.Macd.Signals[klkind] = strategy.SIGNAL_BUY
+		logs.Info("[%s-%s]产生买信号K4", tick.Symbol, strKind)
 		return
 	}
 }

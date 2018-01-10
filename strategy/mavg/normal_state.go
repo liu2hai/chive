@@ -46,7 +46,7 @@ func NewNormalState() strategy.FSMState {
 	ltcParam := &symbolParam{
 		klkind:         protocol.KL5Min,
 		stopLoseRate:   -0.14,
-		stopProfitRate: 0.16,
+		stopProfitRate: 0.17,
 		minVol:         0.1,
 		maxVol:         0.5,
 		stepRate:       0.1,
