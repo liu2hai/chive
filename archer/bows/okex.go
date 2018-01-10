@@ -75,6 +75,7 @@ func (t *okexArcher) Run(archerCh chan *ArcherCmd) {
 	for {
 		cmd := <-archerCh
 
+		logs.Info("archer 收到命令[%d]", cmd.Cmd)
 		switch cmd.Cmd {
 		case INTERNAL_CMD_EXIT:
 			doOkexExit()
@@ -98,6 +99,8 @@ func (t *okexArcher) Run(archerCh chan *ArcherCmd) {
 		case protocol.CMD_TRANSFER_MONEY:
 			t.transferMoney(cmd)
 		}
+
+		logs.Info("archer 完成命令[%d]", cmd.Cmd)
 	}
 }
 
