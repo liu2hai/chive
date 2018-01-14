@@ -25,7 +25,7 @@ chive(韭菜)是一个加密数字货币期货的量化交易系统，现在的�
 influxDB安装下载见[官网](https://www.influxdata.com/)
 
 #### 使用
-进入build目录，使用build.sh生成可执行文件，如果生成失败，请自行安装所需要的第三方库
+进入build目录，使用build.sh生成可执行文件，如果生成失败，请自行安装所需要的第三方库：
 
 	go get github.com/Shopify/sarama
 	go get github.com/golang/protobuf/proto
@@ -33,7 +33,8 @@ influxDB安装下载见[官网](https://www.influxdata.com/)
 	go get github.com/syndtr/goleveldb/leveldb
 	go get github.com/gorilla/websocket
 
-将前面安装好的kafka和influxDB的地址和端口参数，写到build/lapf.cnf里，在okex开户后，往合约账户充值，然后申请api交易权限，将分配的api key和secret key写到build/lapf.cnf里，如下
+将前面安装好的kafka和influxDB的地址和端口参数，写到build/lapf.cnf里。
+在okex开户后，往合约账户充值，然后申请api交易权限，将分配的api key和secret key写到build/lapf.cnf里，如下：
 
     "archer" : {
         "okex": {
