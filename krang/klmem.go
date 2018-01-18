@@ -48,6 +48,7 @@ func newrbf() *rbf {
 func NewKLineMem(db string) *klmem {
 	kl := &klmem{
 		db:  db,
+		k1:  newrbf(),
 		k5:  newrbf(),
 		k15: newrbf(),
 	}
