@@ -37,12 +37,12 @@ func (t *shutdownState) Enter(ctx krang.Context) {
 	logs.Info("进入状态[%s], 次数[%d]", t.Name(), t.shutdownTimes)
 }
 
-// 关闭后，暂停一个小时后重开
+// 关闭后，暂停半个小时后重开
 func (t *shutdownState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) string {
 	n := time.Now()
 	old := time.Unix(t.ts, 0)
 	d := n.Sub(old)
-	if d.Hours() >= 1.0 {
+	if d.Minutes() >= 20 {
 		return STATE_NAME_NORMAL
 	}
 

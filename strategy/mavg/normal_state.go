@@ -8,6 +8,10 @@ import (
 	"github.com/liu2hai/chive/utils"
 )
 
+const (
+	LOSSTIMES_STEP = 5
+)
+
 /*
  mavg策略的正常状态
  正常状态下，不会加仓
@@ -66,7 +70,7 @@ func NewNormalState() strategy.FSMState {
 
 	st := &normalState{
 		spm:            make(map[string]*symbolParam),
-		lossTimesLimit: 5,
+		lossTimesLimit: LOSSTIMES_STEP,
 	}
 	st.spm["ltc_usd"] = ltcParam
 	st.spm["etc_usd"] = etcParam
@@ -86,7 +90,7 @@ func (t *normalState) Enter(ctx krang.Context) {
 	logs.Info("进入状态[%s]", t.Name())
 
 	// 重新进入normal state，增加限制
-	t.lossTimesLimit += 5
+	t.lossTimesLimit += LOSSTIMES_STEP
 
 	// 重新读取头寸信息
 	mavg.queryAllPos(ctx)
@@ -105,11 +109,6 @@ func (t *normalState) Enter(ctx krang.Context) {
  在这个时间差内应该按照最新的头寸信息操作
 */
 func (t *normalState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) string {
-	if t.lossTimes >= t.lossTimesLimit {
-		logs.Info("亏损[%d]次，已达到亏损总次数[%d]限制, 策略暂时关闭", t.lossTimes, t.lossTimesLimit)
-		return STATE_NAME_SHUTDOWN
-	}
-
 	t.handleLongPart(ctx, tick, evc)
 	t.handleShortPart(ctx, tick, evc)
 
