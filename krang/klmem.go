@@ -32,6 +32,7 @@ type rbf struct {
 
 type klmem struct {
 	db  string
+	k1  *rbf
 	k5  *rbf
 	k15 *rbf
 }
@@ -50,13 +51,16 @@ func NewKLineMem(db string) *klmem {
 		k5:  newrbf(),
 		k15: newrbf(),
 	}
+	kl.k1.mag.klkind = protocol.KL1Min
 	kl.k5.mag.klkind = protocol.KL5Min
 	kl.k15.mag.klkind = protocol.KL15Min
 	return kl
 }
 
 func (k *klmem) addKLine(pb *protocol.PBFutureKLine) int32 {
-	if pb.GetKind() == protocol.KL5Min {
+	if pb.GetKind() == protocol.KL1Min {
+		return addImpl(k.k1, pb)
+	} else if pb.GetKind() == protocol.KL5Min {
 		return addImpl(k.k5, pb)
 	} else if pb.GetKind() == protocol.KL15Min {
 		return addImpl(k.k15, pb)
@@ -65,7 +69,9 @@ func (k *klmem) addKLine(pb *protocol.PBFutureKLine) int32 {
 }
 
 func (k *klmem) getLastKLine(kind int32) (klst, bool) {
-	if kind == protocol.KL5Min {
+	if kind == protocol.KL1Min {
+		return fetchImpl(k.k1, kind)
+	} else if kind == protocol.KL5Min {
 		return fetchImpl(k.k5, kind)
 	} else if kind == protocol.KL15Min {
 		return fetchImpl(k.k15, kind)
@@ -143,7 +149,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 	}
 
 	/// Debug
-	logs.Info("[%s-%s] new kline, close[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), k.close, utils.TSStr(tsn))
+	logs.Debug("[%s-%s] new kline, close[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), k.close, utils.TSStr(tsn))
 	/// Debug
 
 	var need int32 = 0
@@ -156,7 +162,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 		need += 1
 
 		/// Debug
-		logs.Info("[%s-%s] new ma7, sum7[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), sum7, utils.TSStr(tsn))
+		logs.Debug("[%s-%s] new ma7, sum7[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), sum7, utils.TSStr(tsn))
 		/// Debug
 	}
 
@@ -167,7 +173,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 		need += 1
 
 		/// Debug
-		logs.Info("[%s-%s] new ma30, sum30[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), sum30, utils.TSStr(tsn))
+		logs.Debug("[%s-%s] new ma30, sum30[%f], time[%s]", symbol, utils.KLineStr(pb.GetKind()), sum30, utils.TSStr(tsn))
 		/// Debug
 	}
 
@@ -183,7 +189,9 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 }
 
 func (k *klmem) queryMaGraphic(kline int32) *MaGraphic {
-	if kline == protocol.KL5Min {
+	if kline == protocol.KL1Min {
+		return k.k1.mag
+	} else if kline == protocol.KL5Min {
 		return k.k5.mag
 	} else if kline == protocol.KL15Min {
 		return k.k15.mag

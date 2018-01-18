@@ -250,7 +250,9 @@ func (g *MaGraphic) ComputeDiffSlopeFactor(tsStart int64, tsEnd int64) float32 {
 
 func (g *MaGraphic) SegmentSecs() int64 {
 	var t int64 = 1
-	if g.klkind == protocol.KL5Min {
+	if g.klkind == protocol.KL1Min {
+		t = 60
+	} else if g.klkind == protocol.KL5Min {
 		t = 5 * 60 // 5min = 300s
 	} else if g.klkind == protocol.KL15Min {
 		t = 15 * 60

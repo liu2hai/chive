@@ -49,7 +49,7 @@ type normalState struct {
 func NewNormalState() strategy.FSMState {
 	ltcParam := &symbolParam{
 		klkind:         protocol.KL5Min,
-		stopLoseRate:   -0.14,
+		stopLoseRate:   -0.13,
 		stopProfitRate: 0.17,
 		minVol:         0.1,
 		maxVol:         0.5,
@@ -58,8 +58,8 @@ func NewNormalState() strategy.FSMState {
 		level:          10,
 	}
 	etcParam := &symbolParam{
-		klkind:         protocol.KL15Min,
-		stopLoseRate:   -0.15,
+		klkind:         protocol.KL1Min,
+		stopLoseRate:   -0.18,
 		stopProfitRate: 0.20,
 		minVol:         1,
 		maxVol:         5,

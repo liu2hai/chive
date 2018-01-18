@@ -164,8 +164,8 @@ func subContractQuote(c *websocket.Conn, symbol string, kind string) {
 	tikerReq := fmt.Sprintf(tikerStr, symbol, kind)
 
 	// kline 数据，订阅1分钟, 5分钟， 15分钟的k线
-	//klineStr1 := "{'event':'addChannel','channel':'ok_sub_futureusd_%s_kline_%s_1min'}"
-	//klineReq1 := fmt.Sprintf(klineStr1, symbol, kind)
+	klineStr1 := "{'event':'addChannel','channel':'ok_sub_futureusd_%s_kline_%s_1min'}"
+	klineReq1 := fmt.Sprintf(klineStr1, symbol, kind)
 
 	klineStr5 := "{'event':'addChannel','channel':'ok_sub_futureusd_%s_kline_%s_5min'}"
 	klineReq5 := fmt.Sprintf(klineStr5, symbol, kind)
@@ -182,7 +182,7 @@ func subContractQuote(c *websocket.Conn, symbol string, kind string) {
 	//tradeReq := fmt.Sprintf(tradeStr, symbol, kind)
 
 	c.WriteMessage(websocket.TextMessage, []byte(tikerReq))
-	//c.WriteMessage(websocket.TextMessage, []byte(klineReq1))
+	c.WriteMessage(websocket.TextMessage, []byte(klineReq1))
 	c.WriteMessage(websocket.TextMessage, []byte(klineReq5))
 	c.WriteMessage(websocket.TextMessage, []byte(klineReq15))
 	//c.WriteMessage(websocket.TextMessage, []byte(tradeReq))

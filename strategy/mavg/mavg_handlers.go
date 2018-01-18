@@ -92,11 +92,21 @@ type klParam struct {
 }
 
 type macdHandler struct {
+	k1mp  *klParam
 	k5mp  *klParam
 	k15mp *klParam
 }
 
 func NewMACDHandler() strategy.FSMHandler {
+	p1 := &klParam{
+		klkind:   protocol.KL1Min,
+		distance: 3,
+		unit:     60,
+		fkrate:   0.5,
+		skrate:   0.3,
+		dkrate:   0.3,
+		fsdiff:   2.0,
+	}
 	p5 := &klParam{
 		klkind:   protocol.KL5Min, // 使用5分钟k线
 		distance: 3,               // 使用N根k线计算斜率
@@ -117,6 +127,7 @@ func NewMACDHandler() strategy.FSMHandler {
 	}
 
 	return &macdHandler{
+		k1mp:  p1,
 		k5mp:  p5,
 		k15mp: p15,
 	}
@@ -127,7 +138,9 @@ func (m *macdHandler) Name() string {
 }
 
 func (m *macdHandler) getKlParam(klkind int32) *klParam {
-	if klkind == protocol.KL5Min {
+	if klkind == protocol.KL1Min {
+		return m.k1mp
+	} else if klkind == protocol.KL5Min {
 		return m.k5mp
 	} else if klkind == protocol.KL15Min {
 		return m.k15mp
@@ -136,6 +149,7 @@ func (m *macdHandler) getKlParam(klkind int32) *klParam {
 }
 
 func (m *macdHandler) OnTick(ctx krang.Context, tick *krang.Tick, e *strategy.EventCompose) {
+	m.doTick(ctx, tick, e, protocol.KL1Min)
 	m.doTick(ctx, tick, e, protocol.KL5Min)
 	m.doTick(ctx, tick, e, protocol.KL15Min)
 }
