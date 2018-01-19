@@ -5,7 +5,6 @@ import (
 	"github.com/liu2hai/chive/logs"
 	"github.com/liu2hai/chive/protocol"
 	"github.com/liu2hai/chive/strategy"
-	"github.com/liu2hai/chive/utils"
 )
 
 /*
@@ -15,18 +14,6 @@ import (
  2. MA信号
  3. 上一个仓位结束后，新建仓位的要冷静一段时间
 */
-
-// 针对单个商品设置的参数
-type symbolParam struct {
-	klkind         int32   // 使用的K线信号
-	stopLoseRate   float32 // 止损率
-	stopProfitRate float32 // 止盈率
-	minVol         float32 // 最小仓位，币
-	maxVol         float32 // 最大仓位，币
-	stepRate       float32 // 单次下单占仓位比例
-	marketSt       bool    // 是否使用市价单
-	level          int32   // 本策略支持的杠杆
-}
 
 type normalState struct {
 	spm map[string]*symbolParam // key:symbol
@@ -133,7 +120,7 @@ func (t *normalState) handleLongPart(ctx krang.Context, tick *krang.Tick, evc *s
 	if evc.Pos.LongAvai <= 0 {
 		if s == strategy.SIGNAL_BUY {
 			reason := "买入信号"
-			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENLONG, reason, sp)
+			ArcherOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENLONG, reason, sp)
 		}
 		return
 	}
@@ -141,19 +128,19 @@ func (t *normalState) handleLongPart(ctx krang.Context, tick *krang.Tick, evc *s
 	// 有多头头寸情况
 	if s == strategy.SIGNAL_EMERGENCY {
 		reason := "紧急情况"
-		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
+		ArcherClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
 		return
 	}
 
 	if evc.Pos.LongFloatPRate <= sp.stopLoseRate || evc.Pos.LongFloatPRate >= sp.stopProfitRate {
 		reason := "超出止盈止损范围"
-		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
+		ArcherClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
 		return
 	}
 
 	if s == strategy.SIGNAL_SELL {
 		reason := "卖出信号，平多"
-		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
+		ArcherClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSELONG, reason, sp)
 	}
 }
 
@@ -171,7 +158,7 @@ func (t *normalState) handleShortPart(ctx krang.Context, tick *krang.Tick, evc *
 	if evc.Pos.ShortAvai <= 0 {
 		if s == strategy.SIGNAL_SELL {
 			reason := "卖出信号"
-			t.doOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENSHORT, reason, sp)
+			ArcherOpenPos(ctx, tick, evc, protocol.ORDERTYPE_OPENSHORT, reason, sp)
 		}
 		return
 	}
@@ -179,112 +166,18 @@ func (t *normalState) handleShortPart(ctx krang.Context, tick *krang.Tick, evc *
 	// 有空头头寸情况
 	if s == strategy.SIGNAL_EMERGENCY {
 		reason := "紧急情况"
-		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
+		ArcherClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
 		return
 	}
 
 	if evc.Pos.ShortFloatPRate <= sp.stopLoseRate || evc.Pos.ShortFloatPRate >= sp.stopProfitRate {
 		reason := "超出止盈止损范围"
-		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
+		ArcherClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
 		return
 	}
 
 	if s == strategy.SIGNAL_BUY {
 		reason := "买入信号，平空"
-		t.doClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
+		ArcherClosePos(ctx, tick, evc, protocol.ORDERTYPE_CLOSESHORT, reason, sp)
 	}
-}
-
-func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32, reason string, sp *symbolParam) {
-	trader := ctx.GetTrader(evc.Exchange)
-	if trader == nil {
-		return
-	}
-
-	// 使用对手价，价格填0
-	var price float32 = 0
-	var pst = protocol.PRICE_ST_MARKET
-	if !sp.marketSt {
-		price = tick.Last
-		pst = protocol.PRICE_ST_LIMIT
-	}
-
-	// 计算合约张数
-	vol := evc.Money.Balance * sp.stepRate
-	if vol < sp.minVol {
-		vol = sp.minVol
-	}
-	if vol > sp.maxVol {
-		vol = sp.maxVol
-	}
-	amount := trader.ComputeContractAmount(evc.Symbol, tick.Last, vol)
-	if amount <= 0 {
-		return
-	}
-
-	cmd := krang.SetOrderCmd{
-		Stname:       THIS_STRATEGY_NAME,
-		Exchange:     evc.Exchange,
-		Symbol:       evc.Symbol,
-		ContractType: evc.ContractType,
-		Price:        price,
-		Amount:       amount,
-		OrderType:    ot,
-		PriceSt:      int32(pst),
-		Level:        sp.level,
-		Vol:          vol,
-	}
-	trader.SetOrder(cmd)
-	evc.Pos.Disable()
-	UpdateOpenStatis(evc.Symbol)
-
-	logs.Info("策略mavg开仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s]",
-		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, cmd.Vol, utils.OrderTypeStr(cmd.OrderType), sp.level, reason)
-}
-
-func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose, ot int32, reason string, sp *symbolParam) {
-	trader := ctx.GetTrader(evc.Exchange)
-	if trader == nil {
-		return
-	}
-
-	var amount int32 = 0
-	var bond float32 = 0
-	var rate float32 = 0
-	if ot == protocol.ORDERTYPE_CLOSELONG {
-		amount = int32(evc.Pos.LongAvai)
-		bond = evc.Pos.LongBond
-		rate = evc.Pos.LongFloatPRate
-	}
-	if ot == protocol.ORDERTYPE_CLOSESHORT {
-		amount = int32(evc.Pos.ShortAvai)
-		bond = evc.Pos.ShortBond
-		rate = evc.Pos.ShortFloatPRate
-	}
-	if amount <= 0 {
-		return
-	}
-
-	cmd := krang.SetOrderCmd{
-		Stname:       THIS_STRATEGY_NAME,
-		Exchange:     evc.Exchange,
-		Symbol:       evc.Symbol,
-		ContractType: evc.ContractType,
-		Price:        tick.Last,
-		Amount:       amount,
-		OrderType:    ot,
-		PriceSt:      protocol.PRICE_ST_MARKET,
-		Level:        sp.level,
-		Vol:          0,
-	}
-	trader.SetOrder(cmd)
-	evc.Pos.Disable()
-	profit := bond * rate
-
-	logs.Info("策略mavg平仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s], 预计盈亏[%f, %f]",
-		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, bond, utils.OrderTypeStr(cmd.OrderType), sp.level, reason,
-		rate*100, profit)
-
-	// 盈亏统计
-	UpdateCloseStatis(evc.Symbol, profit)
 }
