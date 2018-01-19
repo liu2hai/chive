@@ -100,30 +100,30 @@ type macdHandler struct {
 func NewMACDHandler() strategy.FSMHandler {
 	p1 := &klParam{
 		klkind:   protocol.KL1Min,
-		distance: 3,
+		distance: 6,
 		unit:     60,
-		fkrate:   0.5,
-		skrate:   0.3,
-		dkrate:   0.3,
-		fsdiff:   2.0,
+		fkrate:   0.25,
+		skrate:   0.18,
+		dkrate:   0.15,
+		fsdiff:   1.5,
 	}
 	p5 := &klParam{
 		klkind:   protocol.KL5Min, // 使用5分钟k线
 		distance: 3,               // 使用N根k线计算斜率
 		unit:     5 * 60,
-		fkrate:   0.18,
-		skrate:   0.2,
+		fkrate:   0.2,
+		skrate:   0.15,
 		dkrate:   0.1,
-		fsdiff:   1.0,
+		fsdiff:   1.2,
 	}
 	p15 := &klParam{
 		klkind:   protocol.KL15Min,
 		distance: 3,
 		unit:     15 * 60,
-		fkrate:   0.15,
-		skrate:   0.04,
-		dkrate:   0.03,
-		fsdiff:   1.1,
+		fkrate:   0.18,
+		skrate:   0.25,
+		dkrate:   0.16,
+		fsdiff:   1.2,
 	}
 
 	return &macdHandler{
