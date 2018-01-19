@@ -33,6 +33,7 @@ const (
 	STATE_NAME_SHUTDOWN = "shutdown"
 	STATE_NAME_NORMAL   = "normal"
 	STATE_NAME_RADICAL  = "radical"
+	STATE_NAME_DEFENSE  = "defense"
 )
 
 const FB_MAX_CHECKTIMES = 3 // 反馈中未完成命令检查次数
@@ -65,6 +66,10 @@ func (t *MavgStrategy) Init(ctx krang.Context) {
 	radicalst := NewRadicalState()
 	radicalst.Init()
 	t.fsm.AddState(radicalst)
+
+	defense := NewDefenseState()
+	defense.Init()
+	t.fsm.AddState(defense)
 
 	// 默认状态是正常状态
 	t.fsm.SetState(STATE_NAME_NORMAL)
