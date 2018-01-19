@@ -111,9 +111,12 @@ type MaGraphic struct {
 
 	// 最新K线时间
 	kts int64
+
+	// 一根K线单位时间对应的秒数
+	segmentSecs int64
 }
 
-func NewMaGraphic() *MaGraphic {
+func NewMaGraphic(klkind int32, segSec int64) *MaGraphic {
 	m := &MaGraphic{}
 	m.cpts = list.New()
 	m.cptlen = 0
@@ -123,8 +126,9 @@ func NewMaGraphic() *MaGraphic {
 	m.ma30.length = 0
 	m.diff.ma = list.New()
 	m.diff.length = 0
-	m.klkind = protocol.KL15Min // m默认使用15分钟k线
+	m.klkind = klkind
 	m.kts = 0
+	m.segmentSecs = segSec
 	return m
 }
 
@@ -248,18 +252,6 @@ func (g *MaGraphic) ComputeDiffSlopeFactor(tsStart int64, tsEnd int64) float32 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (g *MaGraphic) SegmentSecs() int64 {
-	var t int64 = 1
-	if g.klkind == protocol.KL1Min {
-		t = 60
-	} else if g.klkind == protocol.KL5Min {
-		t = 5 * 60 // 5min = 300s
-	} else if g.klkind == protocol.KL15Min {
-		t = 15 * 60
-	}
-	return t
-}
-
 // x轴为时间，y轴为值
 func (g *MaGraphic) slopeFactor(head mast, tail mast) float32 {
 	deltaX := tail.ts - head.ts
@@ -268,7 +260,7 @@ func (g *MaGraphic) slopeFactor(head mast, tail mast) float32 {
 	}
 
 	// 因为mast里存的是时间戳，second，所以转为x坐标时，其实是K线的格数
-	deltaX = deltaX / g.SegmentSecs()
+	deltaX = deltaX / g.segmentSecs
 
 	deltaY := tail.val - head.val
 	k := deltaY / float32(deltaX)

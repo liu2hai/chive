@@ -31,53 +31,43 @@ type rbf struct {
 }
 
 type klmem struct {
-	db  string
-	k1  *rbf
-	k5  *rbf
-	k15 *rbf
+	db string
+	m  map[int32]*rbf
 }
 
-func newrbf() *rbf {
+func newrbf(klkind int32, segSecs int64) *rbf {
 	return &rbf{
 		kl:  list.New(),
 		kc:  0,
-		mag: NewMaGraphic(),
+		mag: NewMaGraphic(klkind, segSecs),
 	}
 }
 
 func NewKLineMem(db string) *klmem {
-	kl := &klmem{
-		db:  db,
-		k1:  newrbf(),
-		k5:  newrbf(),
-		k15: newrbf(),
+	k := &klmem{
+		db: db,
+		m:  make(map[int32]*rbf),
 	}
-	kl.k1.mag.klkind = protocol.KL1Min
-	kl.k5.mag.klkind = protocol.KL5Min
-	kl.k15.mag.klkind = protocol.KL15Min
-	return kl
+	k.m[protocol.KL1Min] = newrbf(protocol.KL1Min, 60)
+	k.m[protocol.KL5Min] = newrbf(protocol.KL5Min, 5*60)
+	k.m[protocol.KL15Min] = newrbf(protocol.KL15Min, 15*60)
+	return k
 }
 
 func (k *klmem) addKLine(pb *protocol.PBFutureKLine) int32 {
-	if pb.GetKind() == protocol.KL1Min {
-		return addImpl(k.k1, pb)
-	} else if pb.GetKind() == protocol.KL5Min {
-		return addImpl(k.k5, pb)
-	} else if pb.GetKind() == protocol.KL15Min {
-		return addImpl(k.k15, pb)
+	r, ok := k.m[pb.GetKind()]
+	if !ok {
+		return 0
 	}
-	return 0
+	return addImpl(r, pb)
 }
 
 func (k *klmem) getLastKLine(kind int32) (klst, bool) {
-	if kind == protocol.KL1Min {
-		return fetchImpl(k.k1, kind)
-	} else if kind == protocol.KL5Min {
-		return fetchImpl(k.k5, kind)
-	} else if kind == protocol.KL15Min {
-		return fetchImpl(k.k15, kind)
+	r, ok := k.m[kind]
+	if !ok {
+		return klst{}, false
 	}
-	return klst{}, false
+	return fetchImpl(r, kind)
 }
 
 func fetchImpl(r *rbf, kind int32) (klst, bool) {
@@ -132,7 +122,7 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 			return 0
 		}
 
-		if diff >= 0 && diff < r.mag.SegmentSecs() {
+		if diff >= 0 && diff < r.mag.segmentSecs {
 			// 同一根K线数据
 			r.kl.Remove(r.kl.Back())
 			r.kl.PushBack(k)
@@ -189,13 +179,10 @@ func addImpl(r *rbf, pb *protocol.PBFutureKLine) int32 {
 	return 1
 }
 
-func (k *klmem) queryMaGraphic(kline int32) *MaGraphic {
-	if kline == protocol.KL1Min {
-		return k.k1.mag
-	} else if kline == protocol.KL5Min {
-		return k.k5.mag
-	} else if kline == protocol.KL15Min {
-		return k.k15.mag
+func (k *klmem) queryMaGraphic(klkind int32) *MaGraphic {
+	r, ok := k.m[klkind]
+	if !ok {
+		return nil
 	}
-	return nil
+	return r.mag
 }
