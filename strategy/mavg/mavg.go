@@ -46,6 +46,9 @@ const FB_MAX_CHECKTIMES = 3 // 反馈中未完成命令检查次数
 func (t *MavgStrategy) Init(ctx krang.Context) {
 	logs.Info("mavg strategy is working now ...")
 
+	// 初始化统计数据工作
+	InitMavgStatis()
+
 	// 需要关注的交易所和商品合约
 	t.exchange = "okex"
 	t.symbols = []string{"ltc_usd", "etc_usd"}

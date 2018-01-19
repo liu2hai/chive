@@ -8,10 +8,6 @@ import (
 	"github.com/liu2hai/chive/utils"
 )
 
-const (
-	LOSSTIMES_STEP = 5
-)
-
 /*
  mavg策略的正常状态
  正常状态下，不会加仓
@@ -30,20 +26,10 @@ type symbolParam struct {
 	stepRate       float32 // 单次下单占仓位比例
 	marketSt       bool    // 是否使用市价单
 	level          int32   // 本策略支持的杠杆
-
-	opTimes     int32   // 操作次数
-	profitTimes int32   // 盈利次数
-	profitVol   float32 // 盈利币数量
-	lossTimes   int32   // 亏损次数
-	lossVol     float32 // 亏损币数量
 }
 
 type normalState struct {
-	spm            map[string]*symbolParam // key:symbol
-	opTimes        int32                   // 总操作次数
-	profitTimes    int32                   // 总盈利次数
-	lossTimes      int32                   // 总亏损次数
-	lossTimesLimit int32                   // 总亏损次数限制
+	spm map[string]*symbolParam // key:symbol
 }
 
 func NewNormalState() strategy.FSMState {
@@ -69,8 +55,7 @@ func NewNormalState() strategy.FSMState {
 	}
 
 	st := &normalState{
-		spm:            make(map[string]*symbolParam),
-		lossTimesLimit: LOSSTIMES_STEP,
+		spm: make(map[string]*symbolParam),
 	}
 	st.spm["ltc_usd"] = ltcParam
 	st.spm["etc_usd"] = etcParam
@@ -90,7 +75,7 @@ func (t *normalState) Enter(ctx krang.Context) {
 	logs.Info("进入状态[%s]", t.Name())
 
 	// 重新进入normal state，增加限制
-	t.lossTimesLimit += LOSSTIMES_STEP
+	UpLossTimesLimit()
 
 	// 重新读取头寸信息
 	mavg.queryAllPos(ctx)
@@ -109,6 +94,11 @@ func (t *normalState) Enter(ctx krang.Context) {
  在这个时间差内应该按照最新的头寸信息操作
 */
 func (t *normalState) Decide(ctx krang.Context, tick *krang.Tick, evc *strategy.EventCompose) string {
+	// 超过亏损限制，进入保守状态
+	if IsOverLossLimit() {
+		return STATE_NAME_DEFENSE
+	}
+
 	t.handleLongPart(ctx, tick, evc)
 	t.handleShortPart(ctx, tick, evc)
 
@@ -246,8 +236,7 @@ func (t *normalState) doOpenPos(ctx krang.Context, tick *krang.Tick, evc *strate
 	}
 	trader.SetOrder(cmd)
 	evc.Pos.Disable()
-	t.opTimes += 1
-	sp.opTimes += 1
+	UpdateOpenStatis(evc.Symbol)
 
 	logs.Info("策略mavg开仓, [%s_%s_%s], 合约张数[%d], 币数量[%f], 订单类型[%s], 杠杆[%d], 原因[%s]",
 		cmd.Exchange, cmd.Symbol, cmd.ContractType, cmd.Amount, cmd.Vol, utils.OrderTypeStr(cmd.OrderType), sp.level, reason)
@@ -297,20 +286,5 @@ func (t *normalState) doClosePos(ctx krang.Context, tick *krang.Tick, evc *strat
 		rate*100, profit)
 
 	// 盈亏统计
-	t.updateStatics(cmd.Symbol, profit, sp)
-}
-
-func (t *normalState) updateStatics(symbol string, profit float32, sp *symbolParam) {
-	t.opTimes += 1
-	sp.opTimes += 1
-	if profit > 0 {
-		t.profitTimes += 1
-		sp.profitTimes += 1
-		sp.profitVol += profit
-	} else {
-		t.lossTimes += 1
-		sp.lossTimes += 1
-		sp.lossVol += (profit * -1)
-	}
-	logs.Info("策略mavg统计，[%s]盈利次数[%d], 币量[%f]，亏损次数[%d]，币量[%f]", symbol, sp.profitTimes, sp.profitVol, sp.lossTimes, sp.lossVol)
+	UpdateCloseStatis(evc.Symbol, profit)
 }
