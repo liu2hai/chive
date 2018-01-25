@@ -31,7 +31,7 @@ func NewNormalState() strategy.FSMState {
 		level:          10,
 	}
 	etcParam := &symbolParam{
-		klkind:         protocol.KL1Min,
+		klkind:         protocol.KL5Min,
 		stopLoseRate:   -0.18,
 		stopProfitRate: 0.20,
 		minVol:         1,

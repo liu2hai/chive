@@ -32,7 +32,7 @@ func NewDefenseState() strategy.FSMState {
 		level:          10,
 	}
 	etcParam := &symbolParam{
-		klkind:         protocol.KL1Min,
+		klkind:         protocol.KL5Min,
 		stopLoseRate:   -0.1,
 		stopProfitRate: 0.10,
 		minVol:         0,
