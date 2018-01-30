@@ -109,18 +109,18 @@ func NewMACDHandler() strategy.FSMHandler {
 	}
 	p5 := &klParam{
 		klkind:   protocol.KL5Min, // 使用5分钟k线
-		distance: 2,               // 使用N根k线计算斜率
+		distance: 3,               // 使用N根k线计算斜率
 		unit:     5 * 60,
-		fkrate:   0.18,
-		skrate:   0.1,
-		dkrate:   0.1,
-		fsdiff:   1.0,
+		fkrate:   0.20,
+		skrate:   0.12,
+		dkrate:   0.11,
+		fsdiff:   1.3,
 	}
 	p15 := &klParam{
 		klkind:   protocol.KL15Min,
-		distance: 2,
+		distance: 3,
 		unit:     15 * 60,
-		fkrate:   0.18,
+		fkrate:   0.22,
 		skrate:   0.15,
 		dkrate:   0.16,
 		fsdiff:   1.2,
