@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/liu2hai/chive/config"
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/utils"
+	"chive/config"
+	"chive/logs"
+	"chive/utils"
 )
 
 func main() {

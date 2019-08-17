@@ -10,7 +10,7 @@ package kfc
 import (
 	"time"
 
-	"github.com/liu2hai/chive/logs"
+	"chive/logs"
 
 	"github.com/Shopify/sarama"
 )

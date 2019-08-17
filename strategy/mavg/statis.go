@@ -1,7 +1,7 @@
 package mavg
 
 import (
-	"github.com/liu2hai/chive/logs"
+	"chive/logs"
 )
 
 /*

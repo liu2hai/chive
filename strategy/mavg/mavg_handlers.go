@@ -3,11 +3,11 @@ package mavg
 import (
 	"fmt"
 
-	"github.com/liu2hai/chive/krang"
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/protocol"
-	"github.com/liu2hai/chive/strategy"
-	"github.com/liu2hai/chive/utils"
+	"chive/krang"
+	"chive/logs"
+	"chive/protocol"
+	"chive/strategy"
+	"chive/utils"
 )
 
 //////////////////////////////////////

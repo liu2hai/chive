@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/liu2hai/chive/protocol"
+	"chive/protocol"
 )
 
 func TestTm(t *testing.T) {

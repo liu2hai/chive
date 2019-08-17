@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/liu2hai/chive/config"
-	"github.com/liu2hai/chive/logs"
+	"chive/config"
+	"chive/logs"
 
 	"encoding/json"
 )

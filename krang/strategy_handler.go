@@ -1,9 +1,10 @@
 package krang
 
 import (
+	"chive/logs"
+	"chive/protocol"
+
 	"github.com/golang/protobuf/proto"
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/protocol"
 )
 
 type strategyHandler struct {

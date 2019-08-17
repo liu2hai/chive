@@ -1,10 +1,11 @@
 package replay
 
 import (
+	"chive/config"
+	"chive/logs"
+	"chive/utils"
+
 	"github.com/Shopify/sarama"
-	"github.com/liu2hai/chive/config"
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/utils"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 )

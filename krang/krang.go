@@ -11,12 +11,13 @@ import (
 	"errors"
 	"sync/atomic"
 
+	"chive/config"
+	"chive/kfc"
+	"chive/logs"
+	"chive/protocol"
+	"chive/replay"
+
 	"github.com/Shopify/sarama"
-	"github.com/liu2hai/chive/config"
-	"github.com/liu2hai/chive/kfc"
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/protocol"
-	"github.com/liu2hai/chive/replay"
 )
 
 type Handler interface {

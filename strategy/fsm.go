@@ -1,8 +1,8 @@
 package strategy
 
 import (
-	"github.com/liu2hai/chive/krang"
-	"github.com/liu2hai/chive/logs"
+	"chive/krang"
+	"chive/logs"
 )
 
 const (

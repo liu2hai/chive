@@ -1,10 +1,11 @@
 package krang
 
 import (
+	"chive/kfc"
+	"chive/logs"
+	"chive/protocol"
+
 	"github.com/golang/protobuf/proto"
-	"github.com/liu2hai/chive/kfc"
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/protocol"
 )
 
 /*

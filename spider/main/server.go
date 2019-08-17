@@ -5,10 +5,10 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/liu2hai/chive/config"
-	"github.com/liu2hai/chive/kfc"
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/spider/front"
+	"chive/config"
+	"chive/kfc"
+	"chive/logs"
+	"chive/spider/front"
 )
 
 // RunServer  start servers

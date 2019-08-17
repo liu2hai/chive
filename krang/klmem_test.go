@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"chive/protocol"
+
 	"github.com/golang/protobuf/proto"
-	"github.com/liu2hai/chive/protocol"
 )
 
 func TestKlmem(t *testing.T) {

@@ -3,7 +3,7 @@ package krang
 import (
 	"container/list"
 
-	"github.com/liu2hai/chive/protocol"
+	"chive/protocol"
 )
 
 /*

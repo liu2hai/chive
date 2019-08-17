@@ -1,8 +1,8 @@
 package mavg
 
 import (
-	"github.com/liu2hai/chive/krang"
-	"github.com/liu2hai/chive/strategy"
+	"chive/krang"
+	"chive/strategy"
 )
 
 /*

@@ -22,10 +22,10 @@ import (
 
 	simplejson "github.com/bitly/go-simplejson"
 
-	"github.com/liu2hai/chive/config"
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/protocol"
-	"github.com/liu2hai/chive/utils"
+	"chive/config"
+	"chive/logs"
+	"chive/protocol"
+	"chive/utils"
 )
 
 type okexArcher struct {

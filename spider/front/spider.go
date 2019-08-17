@@ -1,6 +1,6 @@
 package front
 
-import "github.com/liu2hai/chive/logs"
+import "chive/logs"
 
 /*
   交易所行情服务接口

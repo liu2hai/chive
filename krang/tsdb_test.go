@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"chive/protocol"
+
 	"github.com/golang/protobuf/proto"
-	"github.com/liu2hai/chive/protocol"
 )
 
 func TestCreateAndShowDB(t *testing.T) {

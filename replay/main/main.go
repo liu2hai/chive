@@ -6,12 +6,12 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/liu2hai/chive/config"
-	"github.com/liu2hai/chive/krang"
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/replay"
-	"github.com/liu2hai/chive/strategy/mavg"
-	"github.com/liu2hai/chive/utils"
+	"chive/config"
+	"chive/krang"
+	"chive/logs"
+	"chive/replay"
+	"chive/strategy/mavg"
+	"chive/utils"
 )
 
 func main() {

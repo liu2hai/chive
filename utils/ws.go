@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/liu2hai/chive/logs"
+	"chive/logs"
 
 	"github.com/gorilla/websocket"
 )

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"chive/kfc"
+	"chive/protocol"
+
 	"github.com/golang/protobuf/proto"
-	"github.com/liu2hai/chive/kfc"
-	"github.com/liu2hai/chive/protocol"
 )
 
 func main() {

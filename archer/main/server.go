@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/liu2hai/chive/archer/bows"
-	"github.com/liu2hai/chive/config"
+	"chive/archer/bows"
+	"chive/config"
 )
 
 // RunServer  start servers

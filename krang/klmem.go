@@ -3,9 +3,9 @@ package krang
 import (
 	"container/list"
 
-	"github.com/liu2hai/chive/logs"
-	"github.com/liu2hai/chive/protocol"
-	"github.com/liu2hai/chive/utils"
+	"chive/logs"
+	"chive/protocol"
+	"chive/utils"
 )
 
 const max_rbf_len = 10000
